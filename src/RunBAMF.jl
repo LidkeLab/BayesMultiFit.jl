@@ -1,6 +1,9 @@
 #Demonstrates use of BAMF on a single region
+using Revise
 using Plots
-#using ImageView
+plotly()
+using ImageView  #comment out for debugging
+
 
 ## 
 include("RJMCMC.jl")
@@ -24,8 +27,10 @@ photons=[777]
 bg=1f-4
 datastate=BAMF.StateFlatBg(n,x,y,photons,bg)
 # create a model
-noisyroi=BAMF.ArrayDD(sz)
-BAMF.genmodel_2Dgauss!(datastate,sz,sigma,noisyroi.data)
+roi=BAMF.ArrayDD(sz)
+BAMF.genmodel_2Dgauss!(datastate,sz,sigma,roi.data)
+noisyroi=BAMF.poissrnd(roi)
+#imshow(noisyroi.data)
 
 
 ## Create a BAMF RJ struct
@@ -40,7 +45,7 @@ jumpprobability=[1,0,0,0,0,0] #Move only
 jumpprobability=jumpprobability/sum(jumpprobability)
 
 # create a structure with all model info
-iterations=100
+iterations=1000
 burnin=1
 acceptfuns=[BAMF.accept_move]
 propfuns=[BAMF.propose_move]
@@ -54,18 +59,24 @@ state1=BAMF.calcintialstate(myRJ)
 mychain=RJMCMC.buildchain(myRJMCMC,myRJ,state1)
 
 ## Display
-
+zoom=Int32(20);
 
 
 jts=mychain.jumptypes
+gr()
 histogram(jts)
-
-histogram(mychain.α)
+histogram(log.(mychain.α))
 histogram(mychain.accept)
 
-
-zoom=Int32(20);
+plotly()
 BAMF.histogram2D(mychain.states,sz,zoom)
+BAMF.histogram2D(mychain.states,sz,zoom,noisyroi)
+
+
+
+#plot!(p,x,y,linetype=scatter,alpha=.5)
+
+
 
 
 

@@ -1,7 +1,9 @@
 module BAMF
 
 using Plots
-#using ImageView
+using ImageView
+using Distributions
+
 
 #Jumptypes are:
 #bg, move, add,remove, split, merge
@@ -55,6 +57,21 @@ RJStructDD(sz,σ,xy_std,I_std)=RJStructDD(sz,σ,xy_std,I_std,ArrayDD(sz))
 function randID(k::Int32)
     return Int32(ceil(k*rand()))
 end
+
+function poissrnd!(d::ArrayDD)
+    for nn=1:d.sz^2
+        d.data[nn]=Float32(rand(Poisson(Float64(d.data[nn]))))
+    end
+end
+
+function poissrnd(d::ArrayDD)
+    out=ArrayDD(d.sz)
+    for nn=1:d.sz^2
+        out.data[nn]=Float32(rand(Poisson(Float64(d.data[nn]))))
+    end
+    return out
+end
+
 
 function genmodel_2Dgauss!(s::StateFlatBg,sz::Int32,σ::Float32,model::Array{Float32,2})
     for ii=1:sz
@@ -181,15 +198,47 @@ function histogram2D(states::Vector{Any},sz::Int32,zoom::Int32)
         end
     end   
 
-    #histogram2d(randn(10000), randn(10000), nbins = 20)
-    #histogram2D(x,y,nbins=100) 
-    histogram(x,nbins=20)
+    xbins=range(1,sz;step=1/zoom)
+    ybins=range(1,sz;step=1/zoom)
+    histplot=histogram2d(x,y,nbins=xbins,ybins, aspect_ratio=:equal,show_empty_bins = true) 
+    return histplot
+end
+
+function test(d::ArrayDD)
+    heatmap(d.data,color=:greys)
+end
 
 
+function histogram2D(states::Vector{Any},sz::Int32,zoom::Int32,d::ArrayDD)
+     #count number of emitters 
+     nemitters=0;
+     for nn=1:length(states) 
+         nemitters+=states[nn].n
+     end
+     
+     x=Vector{Float32}(undef,nemitters)
+     y=Vector{Float32}(undef,nemitters)
+  
+     cnt=0;
+     for ss=1:length(states) 
+         for nn=1:states[ss].n
+           cnt+=1  
+           x[cnt]=states[ss].x[nn]
+           y[cnt]=states[ss].y[nn]
+         end
+     end   
+ 
+     xbins=range(1,sz;step=1/zoom)
+     ybins=range(1,sz;step=1/zoom)
+     fig=heatmap(d.data,color=:greys)
+     histogram2d!(fig,x,y,nbins=xbins,ybins, aspect_ratio=:equal,show_empty_bins = false) 
+         
+     #return histplot
+    
+   
 end
 
 
 
-
-
 end
+
