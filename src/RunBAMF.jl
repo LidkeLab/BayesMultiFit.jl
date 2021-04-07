@@ -70,8 +70,9 @@ histogram(mychain.accept)
 
 plotly()
 BAMF.histogram2D(mychain.states,sz,zoom)
-BAMF.histogram2D(mychain.states,sz,zoom,noisyroi)
+BAMF.histogram2D(mychain.states,sz,zoom,noisyroi,datastate)
 
+BAMF.plottrue(datastate)
 
 
 #plot!(p,x,y,linetype=scatter,alpha=.5)

@@ -63,7 +63,6 @@ function poissrnd!(d::ArrayDD)
         d.data[nn]=Float32(rand(Poisson(Float64(d.data[nn]))))
     end
 end
-
 function poissrnd(d::ArrayDD)
     out=ArrayDD(d.sz)
     for nn=1:d.sz^2
@@ -72,6 +71,10 @@ function poissrnd(d::ArrayDD)
     return out
 end
 
+function circleShape(h,k,r)
+    θ=LinRange(0,2*π,500)
+    h.+r*sin.(θ),k.+r*cos.(θ)
+end
 
 function genmodel_2Dgauss!(s::StateFlatBg,sz::Int32,σ::Float32,model::Array{Float32,2})
     for ii=1:sz
@@ -204,12 +207,7 @@ function histogram2D(states::Vector{Any},sz::Int32,zoom::Int32)
     return histplot
 end
 
-function test(d::ArrayDD)
-    heatmap(d.data,color=:greys)
-end
-
-
-function histogram2D(states::Vector{Any},sz::Int32,zoom::Int32,d::ArrayDD)
+function histogram2D(states::Vector{Any},sz::Int32,zoom::Int32,d::ArrayDD,truestate::StateFlatBg)
      #count number of emitters 
      nemitters=0;
      for nn=1:length(states) 
@@ -232,13 +230,25 @@ function histogram2D(states::Vector{Any},sz::Int32,zoom::Int32,d::ArrayDD)
      ybins=range(1,sz;step=1/zoom)
      fig=heatmap(d.data,color=:greys)
      histogram2d!(fig,x,y,nbins=xbins,ybins, aspect_ratio=:equal,show_empty_bins = false) 
-         
+     
+     dcircle=0.5
+     for nn=1:truestate.n     
+        #plot!(fig,circleShape(truestate.x[nn],truestate.y[nn],dcircle),linecolor=:blue,lw=2)    
+     end
      #return histplot
     
    
 end
 
+function plottrue(truestate::StateFlatBg)
+    dcircle=0.5
+    println("new",truestate.n)
+    nn=1 
+    plot(circleShape(truestate.x[1],truestate.y[1],dcircle))  
+end
 
 
 end
+
+
 
