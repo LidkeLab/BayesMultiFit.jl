@@ -89,14 +89,14 @@ function runchain!(rjs::RJMCMCStruct,rjc::RJChain,iterations,mhs)
 
         #calculate acceptance probability
         α=rjs.acceptfuns[jt](mhs,rjc.states[nn],mtest)
-        rjc.α[nn]=α;
+        rjc.α[nn+1]=α;
 
         #update chain
         if α>rand()
-            rjc.accept[nn]=1;
+            rjc.accept[nn+1]=1;
             rjc.states[nn+1]=mtest;
         else
-            rjc.accept[nn]=0;
+            rjc.accept[nn+1]=0;
             rjc.states[nn+1]=rjc.states[nn];
         end
        

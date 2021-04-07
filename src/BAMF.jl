@@ -3,7 +3,7 @@ module BAMF
 using Plots
 using ImageView
 using Distributions
-
+using CUDA
 
 #Jumptypes are:
 #bg, move, add,remove, split, merge
@@ -39,9 +39,9 @@ end
 
 mutable struct ArrayDD  #direct detection data 
     sz::Int32
-    data::Array{Float32,2}
+    data::CuArray{Float32,2}
 end
-ArrayDD(sz)=ArrayDD(sz,Array{Float32}(undef,sz,sz))
+ArrayDD(sz)=ArrayDD(sz,CuArray{Float32}(undef,sz,sz))
 
 mutable struct RJStructDD #contains data and all static info for Direct Detecsionpassed to BAMF functions 
     sz::Int32
@@ -90,8 +90,24 @@ function genmodel_2Dgauss!(s::StateFlatBg,sz::Int32,σ::Float32,model::Array{Flo
 end
 genmodel_2Dgauss!(m::StateFlatBg,RJStructDD,model::ArrayDD) =
     genmodel_2Dgauss!(m,RJStructDD.sz,RJStructDD.σ,model.data)
-genmodel_2Dgauss!(m::StateFlatBg,sz::Int32,σ::Float32,model::ArrayDD) =
+function genmodel_2Dgauss!(m::StateFlatBg,sz::Int32,σ::Float32,model::ArrayDD)
     genmodel_2Dgauss!(m,sz,σ,model.data)
+end
+function genmodel_2Dgauss!(s::StateFlatBg,sz::Int32,σ::Float32,model::CuArray{Float32,2})
+    for ii=1:sz
+        for jj=1:sz
+            model[ii,jj]=s.bg+1f-4
+            for nn=1:s.n
+                model[ii,jj]+=s.photons[nn]/(2*π*σ^2)*
+                exp(-(ii-s.y[nn])^2/(2*σ^2))*
+                exp(-(jj-s.x[nn])^2/(2*σ^2))
+            end
+        end
+    end
+end
+
+
+
 
 function calcintialstate(rjs::RJStructDD) #find initial state for direct detection data 
     d=rjs.data.data
@@ -110,6 +126,10 @@ function likelihoodratio(m::ArrayDD,mtest::ArrayDD,d::ArrayDD)
     LLR=0;
     for ii=1:m.sz*m.sz
         LLR += m.data[ii] - mtest.data[ii] + d.data[ii] * log(mtest.data[ii] / m.data[ii]);   
+    end
+    L=exp(LLR)
+    if L<0
+        println(L,LLR)
     end
     return exp(LLR)
 end
@@ -184,6 +204,7 @@ end
 
 function histogram2D(states::Vector{Any},sz::Int32,zoom::Int32)
     #count number of emitters 
+
     nemitters=0;
     for nn=1:length(states) 
         nemitters+=states[nn].n
@@ -209,42 +230,34 @@ end
 
 function histogram2D(states::Vector{Any},sz::Int32,zoom::Int32,d::ArrayDD,truestate::StateFlatBg)
      #count number of emitters 
-     nemitters=0;
-     for nn=1:length(states) 
-         nemitters+=states[nn].n
-     end
      
-     x=Vector{Float32}(undef,nemitters)
-     y=Vector{Float32}(undef,nemitters)
-  
-     cnt=0;
-     for ss=1:length(states) 
-         for nn=1:states[ss].n
-           cnt+=1  
-           x[cnt]=states[ss].x[nn]
-           y[cnt]=states[ss].y[nn]
-         end
-     end   
- 
-     xbins=range(1,sz;step=1/zoom)
-     ybins=range(1,sz;step=1/zoom)
-     fig=heatmap(d.data,color=:greys)
-     histogram2d!(fig,x,y,nbins=xbins,ybins, aspect_ratio=:equal,show_empty_bins = false) 
-     
-     dcircle=0.5
-     for nn=1:truestate.n     
-        #plot!(fig,circleShape(truestate.x[nn],truestate.y[nn],dcircle),linecolor=:blue,lw=2)    
-     end
-     #return histplot
+      #count number of emitters 
+    nemitters=0;
+    for nn=1:length(states) 
+        nemitters+=states[nn].n
+    end
     
-   
-end
+    x=Vector{Float32}(undef,nemitters)
+    y=Vector{Float32}(undef,nemitters)
+ 
+    cnt=0;
+    for ss=1:length(states) 
+        for nn=1:states[ss].n
+          cnt+=1  
+          x[cnt]=states[ss].x[nn]
+          y[cnt]=states[ss].y[nn]
+        end
+    end   
 
-function plottrue(truestate::StateFlatBg)
+    xbins=range(1,sz;step=1/zoom)
+    ybins=range(1,sz;step=1/zoom)
+    fig=heatmap(d.data,color=:greys)
+    histogram2d!(fig,x,y,nbins=xbins,ybins, aspect_ratio=:equal,show_empty_bins = false) 
     dcircle=0.5
-    println("new",truestate.n)
-    nn=1 
-    plot(circleShape(truestate.x[1],truestate.y[1],dcircle))  
+    for nn=1:truestate.n
+        plot!(fig,circleShape(truestate.x[nn],truestate.y[nn],dcircle),color=:blue)  
+    end
+    return fig
 end
 
 
