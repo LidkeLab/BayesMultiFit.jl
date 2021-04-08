@@ -71,12 +71,12 @@ myRJMCMC=RJMCMC.RJMCMCStruct(burnin,iterations,njumptypes,jumpprobability,propfu
 #create an intial state
 state1=BAMF.calcintialstate(myRJ)
 
-#run chain
+## run chain
 #ImageView.closeall()
 @time begin
 mychain=RJMCMC.buildchain(myRJMCMC,myRJ,state1);
 mychain=RJMCMC.buildchain(myRJMCMC,myRJ,datastate);
-end
+end  
 
 ## Display
 zoom=Int32(20)
