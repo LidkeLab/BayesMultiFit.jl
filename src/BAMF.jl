@@ -12,28 +12,28 @@ using CUDA
 
 mutable struct StateFlatBg # this gets saved in chain
     n::Int32
-    x::Vector{Float32}
-    y::Vector{Float32}
-    photons::Vector{Float32}
+    x::CuArray{Float32}
+    y::CuArray{Float32}
+    photons::CuArray{Float32}
     bg::Float32
 end
 StateFlatBg() = StateFlatBg(0, [0], [0], [0], 0)
+StateFlatBg(n::Int32) = StateFlatBg(n, CuArray{Float32}(undef,n), CuArray{Float32}(undef,n), CuArray{Float32}(undef,n), 0)
+
+
+function StateFlatBg_CUDA!(myempty,myfull)
+    idx=threadIdx().x
+    myempty[idx]=myfull[idx]
+    return nothing
+end
+
 function StateFlatBg(sf::StateFlatBg) # make a deep copy
-    s = StateFlatBg()
-    s.n = sf.n
-    s.bg = sf.bg
-    s.x = Vector{Float32}(undef, s.n)
-    s.y = Vector{Float32}(undef, s.n)
-    s.photons = Vector{Float32}(undef, s.n)
-    for nn = 1:s.n
-        s.x[nn] = sf.x[nn]
-    end
-    for nn = 1:s.n
-        s.y[nn] = sf.y[nn]
-    end
-    for nn = 1:s.n
-        s.photons[nn] = sf.photons[nn]
-    end
+    s = StateFlatBg(sf.n)
+    
+    @cuda threads=s.n StateFlatBg_CUDA!(s.x,sf.x)
+    @cuda threads=s.n StateFlatBg_CUDA!(s.y,sf.y)
+    @cuda threads=s.n StateFlatBg_CUDA!(s.photons,sf.photons)
+
     return s
 end
 
@@ -88,28 +88,46 @@ function genmodel_2Dgauss!(s::StateFlatBg, sz::Int32, σ::Float32, model::Array{
         end
     end
 end
+
+function genmodel_2Dgauss_CUDA!(s_n::Int32,s_x, s_y, 
+    s_photons,s_bg::Float32, sz::Int32, σ::Float32, model)
+     #note that the 2d array is linearized and using 1-based indexing in kernel
+     ii = blockIdx().x
+     jj = threadIdx().x 
+     
+     idx=(ii-1)*sz+jj
+     model[idx] = s_bg + 1f-4
+     for nn = 1:s_n
+         model[idx] += s_photons[nn] / (2 * π * σ^2) *
+                 exp(-(ii - s_y[nn])^2 / (2 * σ^2)) *
+                 exp(-(jj - s_x[nn])^2 / (2 * σ^2))
+     end
+     return nothing
+end
+
+function genmodel_2Dgauss_CUDA!(s::StateFlatBg, sz::Int32, σ::Float32, model)
+    #note that the 2d array is linearized and using 0-based indexing in kernel
+    ii = blockIdx().x
+    jj = threadIdx().x 
+    
+    idx=(ii-1)*sz+jj
+    model[idx] = s.bg + 1f-4
+    for nn = 1:s.n
+        model[idx] += s.photons[nn] / (2 * π * σ^2) *
+                exp(-(ii - s.y[nn])^2 / (2 * σ^2)) *
+                exp(-(jj - s.x[nn])^2 / (2 * σ^2))
+    end
+    return nothing
+end
+
 genmodel_2Dgauss!(m::StateFlatBg,RJStructDD,model::ArrayDD) =
     genmodel_2Dgauss!(m, RJStructDD.sz, RJStructDD.σ, model.data)
 function genmodel_2Dgauss!(m::StateFlatBg, sz::Int32, σ::Float32, model::ArrayDD)
     genmodel_2Dgauss!(m, sz, σ, model.data)
 end
-function genmodel_2Dgauss!(s::StateFlatBg, sz::Int32, σ::Float32, model::CuArray{Float32,2})  
-    @cuda threads=sz blocks=sz genmodel_2Dgauss_CDUA!(s, sz, σ, model)
+function genmodel_2Dgauss!(s::StateFlatBg, sz::Int32, σ::Float32, model::CuArray{Float32,2}) 
+    @cuda threads=sz blocks=sz genmodel_2Dgauss_CUDA!(s.n,s.x,s.y,s.photons,s.bg, sz, σ, model)
 end
-
-function genmodel_2Dgauss_CDUA!(s::StateFlatBg, sz::Int32, σ::Float32, model::CuArray{Float32,2})
-    ii = blockDim().x
-    jj = threadDim().x 
-    model[ii,jj] = s.bg + 1f-4
-    for nn = 1:s.n
-        model[ii,jj] += s.photons[nn] / (2 * π * σ^2) *
-                exp(-(ii - s.y[nn])^2 / (2 * σ^2)) *
-                exp(-(jj - s.x[nn])^2 / (2 * σ^2))
-    end
-end
-
-
-
 
 function calcintialstate(rjs::RJStructDD) # find initial state for direct detection data 
     d = rjs.data.data
@@ -124,16 +142,37 @@ function calcintialstate(rjs::RJStructDD) # find initial state for direct detect
     return state1
 end
 
+# function likelihoodratio(m::ArrayDD, mtest::ArrayDD, d::ArrayDD)
+#     LLR = 0;
+#     for ii = 1:m.sz * m.sz
+#         LLR += m.data[ii] - mtest.data[ii] + d.data[ii] * log(mtest.data[ii] / m.data[ii]);   
+#     end
+#     L = exp(LLR)
+#     if L < 0
+#         println(L, LLR)
+#     end
+#     return exp(LLR)
+# end
+
 function likelihoodratio(m::ArrayDD, mtest::ArrayDD, d::ArrayDD)
-    LLR = 0;
-    for ii = 1:m.sz * m.sz
-        LLR += m.data[ii] - mtest.data[ii] + d.data[ii] * log(mtest.data[ii] / m.data[ii]);   
-    end
-    L = exp(LLR)
-    if L < 0
-        println(L, LLR)
-    end
-    return exp(LLR)
+    return likelihoodratio(m.sz,m.data,mtest.data,d.data)
+end
+
+function likelihoodratio(sz,m::CuArray{Float32,2}, mtest::CuArray{Float32,2}, d::CuArray{Float32,2})
+    LLR=CuArray{Float32}(undef, 1)
+    LLR[1]=0;
+    @cuda threads=sz blocks=sz likelihoodratio_CUDA!(sz,m,mtest,d,LLR)
+    L = exp(LLR[1])
+    return L
+end
+
+function likelihoodratio_CUDA!(sz::Int32,m, mtest, d,LLR)
+    ii = blockIdx().x
+    jj = threadIdx().x 
+    idx=(ii-1)*sz+jj
+    llr=m[idx] - mtest[idx] + d[idx] * log(mtest[idx] / m[idx])
+    CUDA.atomic_add!(pointer(LLR,1), llr)
+    return nothing
 end
 
 ## Acceptance probability calculations
