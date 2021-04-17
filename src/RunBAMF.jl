@@ -76,7 +76,8 @@ state1=BAMF.calcintialstate(myRJ)
 using Profile
 using ProfileView
 ProfileView.@profview mychain=RJMCMC.buildchain(myRJMCMC,myRJ,datastate)
-# mychain=RJMCMC.buildchain(myRJMCMC,myRJ,datastate)
+
+@time mychain=RJMCMC.buildchain(myRJMCMC,myRJ,datastate)
 
 
 
@@ -84,14 +85,12 @@ ProfileView.@profview mychain=RJMCMC.buildchain(myRJMCMC,myRJ,datastate)
 
 zoom=Int32(20)
 jts=mychain.jumptypes
-gr()
-p=plot(jts,jts)
-p2=histogram(jts)
-p3=histogram(log.(mychain.α))
-p4=histogram(mychain.accept)
+#gr()
+#p3=histogram(log.(mychain.α))
+#p4=histogram(mychain.accept)
 
 plotly()
-BAMF.histogram2D(mychain.states,sz,zoom)
+#BAMF.histogram2D(mychain.states,sz,zoom)
 BAMF.histogram2D(mychain.states,sz,zoom,noisyroi,datastate)
 
 ## Testing cuda kernels
@@ -174,5 +173,24 @@ ProfileView.@profview begin
 end
 
 
+## random number generator
+using GPUArrays
+using CUDA
 
+
+A = CuArray{Float32}(undef,1)
+A[1]=1000
+
+function kernel_rand!(state, randstate)
+    random_number = GPUArrays.gpu_rand(Float32, state, randstate)
+    CUDA.@cuprintln(random_number)
+    return
+end
+
+
+
+@cuda kernel_rand!
+
+
+gpu_call(kernel_rand, A, (randstate,))
 

@@ -19,21 +19,16 @@ mutable struct StateFlatBg # this gets saved in chain
 end
 StateFlatBg() = StateFlatBg(0, [0], [0], [0], 0)
 StateFlatBg(n::Int32) = StateFlatBg(n, CuArray{Float32}(undef,n), CuArray{Float32}(undef,n), CuArray{Float32}(undef,n), 0)
-
-
 function StateFlatBg_CUDA!(myempty,myfull)
     idx=threadIdx().x
     myempty[idx]=myfull[idx]
     return nothing
 end
-
 function StateFlatBg(sf::StateFlatBg) # make a deep copy
     s = StateFlatBg(sf.n)
-    
     @cuda threads=s.n StateFlatBg_CUDA!(s.x,sf.x)
     @cuda threads=s.n StateFlatBg_CUDA!(s.y,sf.y)
     @cuda threads=s.n StateFlatBg_CUDA!(s.photons,sf.photons)
-
     return s
 end
 
@@ -42,7 +37,6 @@ mutable struct ArrayDD  # direct detection data
     data::CuArray{Float32,2}
 end
 ArrayDD(sz) = ArrayDD(sz, CuArray{Float32}(undef, sz, sz))
-
 mutable struct RJStructDD # contains data and all static info for Direct Detecsionpassed to BAMF functions 
     sz::Int32
     σ::Float32
@@ -53,7 +47,6 @@ end
 RJStructDD(sz,σ,xy_std,I_std) = RJStructDD(sz, σ, xy_std, I_std, ArrayDD(sz))
 
 ## Helper functions
-
 function randID(k::Int32)
     return Int32(ceil(k * rand()))
 end
@@ -69,6 +62,14 @@ function poissrnd(d::ArrayDD)
         out.data[nn] = Float32(rand(Poisson(Float64(d.data[nn]))))
     end
     return out
+end
+
+function curandn()
+    r=0;
+    for ii=1:12
+        r+=rand()
+    end
+    return r-6f0
 end
 
 function circleShape(h, k, r)
@@ -159,8 +160,8 @@ function likelihoodratio(m::ArrayDD, mtest::ArrayDD, d::ArrayDD)
 end
 
 function likelihoodratio(sz,m::CuArray{Float32,2}, mtest::CuArray{Float32,2}, d::CuArray{Float32,2})
-    LLR=CuArray{Float32}(undef, 1)
-    LLR[1]=0;
+    LLR=CUDA.zeros(1)
+    # LLR[1]=0;
     @cuda threads=sz blocks=sz likelihoodratio_CUDA!(sz,m,mtest,d,LLR)
     L = exp(LLR[1])
     return L
@@ -214,11 +215,19 @@ function propose_move(rjs::RJStructDD, currentstate::StateFlatBg)
     # get an emitter
     ID = randID(currentstate.n)
     # move the emitter
-    teststate.x[ID] += rjs.xy_std * randn()
-    teststate.y[ID] += rjs.xy_std * randn()
-    teststate.photons[ID] += rjs.I_std * randn()
+    move_emitter!(ID,teststate.x,teststate.y,teststate.photons,rjs.xy_std,rjs.I_std)
     return teststate
 end
+function move_emitter!(ID::Int32,x::CuArray,y::CuArray,photons::CuArray,xy_std::Float32,i_std::Float32) 
+    @cuda move_emitter_CUDA!(ID,x,y,photons,xy_std,i_std)
+end
+function move_emitter_CUDA!(ID::Int32,x,y,photons,xy_std::Float32,i_std::Float32)
+    x[ID]+=xy_std*curandn()
+    y[ID]+=xy_std*curandn()
+    photons[ID]+=i_std*curandn()
+    return nothing
+end
+
 
 function propose_bg()
     return rand()
