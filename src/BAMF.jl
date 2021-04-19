@@ -156,7 +156,7 @@ end
 # end
 
 function likelihoodratio(m::ArrayDD, mtest::ArrayDD, d::ArrayDD)
-    return likelihoodratio(m.sz,m.data,mtest.data,d.data)
+     return likelihoodratio(m.sz,m.data,mtest.data,d.data)
 end
 
 function likelihoodratio(sz,m::CuArray{Float32,2}, mtest::CuArray{Float32,2}, d::CuArray{Float32,2})

@@ -2,7 +2,9 @@
 using Revise
 using Plots
 using ImageView  #comment out for debugging
-
+using Profile
+using ProfileView
+using CUDA
 
 ## 
 include("RJMCMC.jl")
@@ -73,8 +75,7 @@ state1=BAMF.calcintialstate(myRJ)
 
 ## run chain
 #ImageView.closeall()
-using Profile
-using ProfileView
+
 ProfileView.@profview mychain=RJMCMC.buildchain(myRJMCMC,myRJ,datastate)
 
 @time mychain=RJMCMC.buildchain(myRJMCMC,myRJ,datastate)
@@ -156,7 +157,7 @@ end
 
 ##
 
-using CUDA
+
 
 # C=CUDA.CuPrimaryContext(CUDA.device())
 # CUDA.unsafe_reset!(C)
@@ -171,26 +172,4 @@ ProfileView.@profview begin
 @cuda threads=sz blocks=sz BAMF.likelihoodratio_CUDA!(sz,model,model,model,LLR)
     end
 end
-
-
-## random number generator
-using GPUArrays
-using CUDA
-
-
-A = CuArray{Float32}(undef,1)
-A[1]=1000
-
-function kernel_rand!(state, randstate)
-    random_number = GPUArrays.gpu_rand(Float32, state, randstate)
-    CUDA.@cuprintln(random_number)
-    return
-end
-
-
-
-@cuda kernel_rand!
-
-
-gpu_call(kernel_rand, A, (randstate,))
 
