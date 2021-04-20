@@ -2,7 +2,7 @@ module BAMF
 
 using Plots
 using ImageView
-using Distributions
+using Distributions 
 using CUDA
 
 # Jumptypes are:
@@ -10,33 +10,65 @@ using CUDA
 
 ## Data types
 
-mutable struct StateFlatBg # this gets saved in chain
+## StateFlatBg-------------
+abstract type StateFlatBg end
+mutable struct StateFlatBg_CUDA <: StateFlatBg # this gets saved in chain
     n::Int32
     x::CuArray{Float32}
     y::CuArray{Float32}
     photons::CuArray{Float32}
     bg::Float32
 end
-StateFlatBg() = StateFlatBg(0, [0], [0], [0], 0)
-StateFlatBg(n::Int32) = StateFlatBg(n, CuArray{Float32}(undef,n), CuArray{Float32}(undef,n), CuArray{Float32}(undef,n), 0)
-function StateFlatBg_CUDA!(myempty,myfull)
+mutable struct StateFlatBg_CPU <: StateFlatBg # this gets saved in chain
+    n::Int32
+    x::Vector{Float32}
+    y::Vector{Float32}
+    photons::Vector{Float32}
+    bg::Float32
+end
+StateFlatBg() = StateFlatBg_CPU(0, [0], [0], [0], 0)
+StateFlatBg(n::Int32) = StateFlatBg_CPU(n, Vector{Float32}(undef,n),Vector{Float32}(undef,n), Vector{Float32}(undef,n), 0)
+StateFlatBg(n::Int32, x::Vector{Float32},y::Vector{Float32}, photons::Vector{Float32},bg::Float32)=StateFlatBg_CPU(n, x,y,photons, bg)
+StateFlatBg_CUDA(n::Int32) = StateFlatBg_CPU(n, CuArray{Float32}(undef,n), CuArray{Float32}(undef,n), CuArray{Float32}(undef,n), 0)
+
+function StateFlatBg_CUDACopy!(myempty,myfull)
     idx=threadIdx().x
     myempty[idx]=myfull[idx]
     return nothing
 end
-function StateFlatBg(sf::StateFlatBg) # make a deep copy
-    s = StateFlatBg(sf.n)
-    @cuda threads=s.n StateFlatBg_CUDA!(s.x,sf.x)
-    @cuda threads=s.n StateFlatBg_CUDA!(s.y,sf.y)
-    @cuda threads=s.n StateFlatBg_CUDA!(s.photons,sf.photons)
+function StateFlatBg(sf::StateFlatBg_CUDA) # make a deep copy
+    s = StateFlatBg_CUDA(sf.n)
+    @cuda threads=s.n StateFlatBg_CUDACopy!(s.x,sf.x)
+    @cuda threads=s.n StateFlatBg_CUDACopy!(s.y,sf.y)
+    @cuda threads=s.n StateFlatBg_CUDACopy!(s.photons,sf.photons)
     return s
 end
+function StateFlatBg(sf::StateFlatBg_CPU) # make a deep copy
+    s = StateFlatBg(sf.n)
+    for nn=1:s.n
+        s.x[nn]=sf.x[nn]
+        s.y[nn]=sf.y[nn]
+        s.photons[nn]=sf.photons[nn]
+    end
+    return s
+end
+## ------------------
 
-mutable struct ArrayDD  # direct detection data 
+
+## ArrayDD----------
+abstract type ArrayDD end
+mutable struct ArrayDD_CUDA <: ArrayDD  # direct detection data 
     sz::Int32
     data::CuArray{Float32,2}
 end
-ArrayDD(sz) = ArrayDD(sz, CuArray{Float32}(undef, sz, sz))
+mutable struct ArrayDD_CPU <: ArrayDD  # direct detection data 
+    sz::Int32
+    data::Array{Float32,2}
+end
+ArrayDD_CUDA(sz) = ArrayDD(sz, CuArray{Float32}(undef, sz, sz))
+ArrayDD(sz) = ArrayDD_CPU(sz, Array{Float32}(undef, sz, sz))
+## ------------------
+
 mutable struct RJStructDD # contains data and all static info for Direct Detecsionpassed to BAMF functions 
     sz::Int32
     σ::Float32
@@ -77,6 +109,7 @@ function circleShape(h, k, r)
     h .+ r * sin.(θ), k .+ r * cos.(θ)
 end
 
+## genmodel_2Dgauss_CUDA -------
 function genmodel_2Dgauss!(s::StateFlatBg, sz::Int32, σ::Float32, model::Array{Float32,2})
     for ii = 1:sz
         for jj = 1:sz
@@ -130,6 +163,8 @@ function genmodel_2Dgauss!(s::StateFlatBg, sz::Int32, σ::Float32, model::CuArra
     @cuda threads=sz blocks=sz genmodel_2Dgauss_CUDA!(s.n,s.x,s.y,s.photons,s.bg, sz, σ, model)
 end
 
+# ---------------------
+
 function calcintialstate(rjs::RJStructDD) # find initial state for direct detection data 
     d = rjs.data.data
     state1 = StateFlatBg()
@@ -143,17 +178,31 @@ function calcintialstate(rjs::RJStructDD) # find initial state for direct detect
     return state1
 end
 
-# function likelihoodratio(m::ArrayDD, mtest::ArrayDD, d::ArrayDD)
-#     LLR = 0;
-#     for ii = 1:m.sz * m.sz
-#         LLR += m.data[ii] - mtest.data[ii] + d.data[ii] * log(mtest.data[ii] / m.data[ii]);   
-#     end
-#     L = exp(LLR)
-#     if L < 0
-#         println(L, LLR)
-#     end
-#     return exp(LLR)
-# end
+
+## likelihoodratio --------------
+function likelihoodratio(m::ArrayDD, mtest::ArrayDD, d::Array{Float32,2})
+    LLR = 0;
+    for ii = 1:m.sz * m.sz
+        LLR += m.data[ii] - mtest.data[ii] + d.data[ii] * log(mtest.data[ii] / m.data[ii]);   
+    end
+    L = exp(LLR)
+    if L < 0
+        println(L, LLR)
+    end
+    return exp(LLR)
+end
+
+function likelihoodratio(sz::Int32, m::Array{Float32,2}, mtest::Array{Float32,2}, d::Array{Float32,2})
+    LLR = 0;
+    for ii = 1:sz * sz
+        LLR += m[ii] - mtest[ii] + d[ii] * log(mtest[ii] / m[ii]);   
+    end
+    L = exp(LLR)
+    if L < 0
+        println(L, LLR)
+    end
+    return exp(LLR)
+end
 
 function likelihoodratio(m::ArrayDD, mtest::ArrayDD, d::ArrayDD)
      return likelihoodratio(m.sz,m.data,mtest.data,d.data)
@@ -175,6 +224,9 @@ function likelihoodratio_CUDA!(sz::Int32,m, mtest, d,LLR)
     CUDA.atomic_add!(pointer(LLR,1), llr)
     return nothing
 end
+
+## ---------------------
+
 
 ## Acceptance probability calculations
 
@@ -227,6 +279,13 @@ function move_emitter_CUDA!(ID::Int32,x,y,photons,xy_std::Float32,i_std::Float32
     photons[ID]+=i_std*curandn()
     return nothing
 end
+function move_emitter!(ID::Int32,x::Vector{Float32},y::Vector{Float32},photons::Vector{Float32},xy_std::Float32,i_std::Float32) 
+    x[ID]+=xy_std*randn()
+    y[ID]+=xy_std*randn()
+    photons[ID]+=i_std*randn()
+    return nothing
+end
+
 
 
 function propose_bg()

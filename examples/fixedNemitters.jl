@@ -8,12 +8,12 @@ includet("../src/BAMF.jl")
 using .RJMCMC
 
 ## create a dataset 
-n=3
+n=Int32(3)
 sz=Int32(16)
 sigma=1.3f0
-x=[sz/2,sz/2-3,sz/2+3]
-y=[sz/2,sz/2+3,sz/2+3]
-photons=[777,500,800]
+x=Vector{Float32}([sz/2,sz/2-3,sz/2+3])
+y=Vector{Float32}([sz/2,sz/2+3,sz/2+3])
+photons=Vector{Float32}([777,500,800])
 bg=1f-4
 datastate=BAMF.StateFlatBg(n,x,y,photons,bg)
 
