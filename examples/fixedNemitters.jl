@@ -11,8 +11,8 @@ using .RJMCMC
 n=Int32(3)
 sz=Int32(16)
 sigma=1.3f0
-x=Vector{Float32}([sz/2,sz/2-3,sz/2+3])
-y=Vector{Float32}([sz/2,sz/2+3,sz/2+3])
+x=Vector{Float32}([sz/2,sz/2-3,sz/2+3])+randn(Float32,3)
+y=Vector{Float32}([sz/2,sz/2+3,sz/2+3])+randn(Float32,3)
 photons=Vector{Float32}([777,500,800])
 bg=1f-4
 datastate=BAMF.StateFlatBg(n,x,y,photons,bg)
@@ -35,16 +35,24 @@ jumpprobability=jumpprobability/sum(jumpprobability)
 
 # create an RJMCMC structure with all model info
 iterations=5000
-burnin=1000
+burnin=100
 acceptfuns=[BAMF.accept_move] #array of functions
 propfuns=[BAMF.propose_move] #array of functions
 myRJMCMC=RJMCMC.RJMCMCStruct(burnin,iterations,njumptypes,jumpprobability,propfuns,acceptfuns)
 
 #create an intial state
-state1=BAMF.calcintialstate(myRJ)
+#state1=BAMF.calcintialstate(myRJ)
+n=Int32(3)
+sz=Int32(16)
+sigma=1.3f0
+x=Vector{Float32}([sz/2,sz/2,sz/2])+randn(Float32,3)
+y=Vector{Float32}([sz/2,sz/2,sz/2])+randn(Float32,3)
+photons=Vector{Float32}([777,500,800])
+bg=1f-4
+state1=BAMF.StateFlatBg(n,x,y,photons,bg)
 
 ## run chain
-@time mychain=RJMCMC.buildchain(myRJMCMC,myRJ,datastate)
+@time mychain=RJMCMC.buildchain(myRJMCMC,myRJ,state1)
 
 ## Display
 zoom=Int32(20)

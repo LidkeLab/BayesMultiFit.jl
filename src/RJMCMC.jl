@@ -43,7 +43,8 @@ return newchain
 end
 
 function initchain(rjs::RJMCMCStruct,intialstate) #this initializes new chain given an intial state and configures a burnin
-    newchain=RJChain(rjs.burnin)
+    njumps=Int32(max(rjs.burnin,1)); #handle zero burn in case
+    newchain=RJChain(njumps)
     newchain.states[1]=intialstate
     newchain.accept[1]=1
     newchain.α[1]=1
@@ -67,9 +68,11 @@ end
 
 function buildchain(rjs::RJMCMCStruct,mhs,intialstate)
     
-    #init and burnin
+    #init and burnin    
     bchain=initchain(rjs,intialstate)
-    runchain!(rjs,bchain,rjs.burnin,mhs)
+    if rjs.burnin>0
+        runchain!(rjs,bchain,rjs.burnin,mhs)
+    end
 
     #real chain
     chain=initchain(rjs,bchain)
