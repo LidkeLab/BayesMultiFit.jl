@@ -5,78 +5,15 @@ using ImageView
 using Distributions 
 using CUDA
 
+
+
 # Jumptypes are:
 # bg, move, add,remove, split, merge
 
 ## Data types
-
-## StateFlatBg-------------
-abstract type StateFlatBg end
-mutable struct StateFlatBg_CUDA <: StateFlatBg # this gets saved in chain
-    n::Int32
-    x::CuArray{Float32}
-    y::CuArray{Float32}
-    photons::CuArray{Float32}
-    bg::Float32
-end
-mutable struct StateFlatBg_CPU <: StateFlatBg # this gets saved in chain
-    n::Int32
-    x::Vector{Float32}
-    y::Vector{Float32}
-    photons::Vector{Float32}
-    bg::Float32
-end
-StateFlatBg() = StateFlatBg_CPU(0, [0], [0], [0], 0)
-StateFlatBg(n::Int32) = StateFlatBg_CPU(n, Vector{Float32}(undef,n),Vector{Float32}(undef,n), Vector{Float32}(undef,n), 0)
-StateFlatBg(n::Int32, x::Vector{Float32},y::Vector{Float32}, photons::Vector{Float32},bg::Float32)=StateFlatBg_CPU(n, x,y,photons, bg)
-StateFlatBg_CUDA(n::Int32) = StateFlatBg_CPU(n, CuArray{Float32}(undef,n), CuArray{Float32}(undef,n), CuArray{Float32}(undef,n), 0)
-
-function StateFlatBg_CUDACopy!(myempty,myfull)
-    idx=threadIdx().x
-    myempty[idx]=myfull[idx]
-    return nothing
-end
-function StateFlatBg(sf::StateFlatBg_CUDA) # make a deep copy
-    s = StateFlatBg_CUDA(sf.n)
-    @cuda threads=s.n StateFlatBg_CUDACopy!(s.x,sf.x)
-    @cuda threads=s.n StateFlatBg_CUDACopy!(s.y,sf.y)
-    @cuda threads=s.n StateFlatBg_CUDACopy!(s.photons,sf.photons)
-    return s
-end
-function StateFlatBg(sf::StateFlatBg_CPU) # make a deep copy
-    s = StateFlatBg(sf.n)
-    for nn=1:s.n
-        s.x[nn]=sf.x[nn]
-        s.y[nn]=sf.y[nn]
-        s.photons[nn]=sf.photons[nn]
-    end
-    return s
-end
-## ------------------
-
-
-## ArrayDD----------
-abstract type ArrayDD end
-mutable struct ArrayDD_CUDA <: ArrayDD  # direct detection data 
-    sz::Int32
-    data::CuArray{Float32,2}
-end
-mutable struct ArrayDD_CPU <: ArrayDD  # direct detection data 
-    sz::Int32
-    data::Array{Float32,2}
-end
-ArrayDD_CUDA(sz) = ArrayDD(sz, CuArray{Float32}(undef, sz, sz))
-ArrayDD(sz) = ArrayDD_CPU(sz, Array{Float32}(undef, sz, sz))
-## ------------------
-
-mutable struct RJStructDD # contains data and all static info for Direct Detecsionpassed to BAMF functions 
-    sz::Int32
-    σ::Float32
-    xy_std::Float32
-    I_std::Float32
-    data::ArrayDD
-end
-RJStructDD(sz,σ,xy_std,I_std) = RJStructDD(sz, σ, xy_std, I_std, ArrayDD(sz))
+println(pwd())
+#using Revise
+include("bamftypes.jl")
 
 ## Helper functions
 function randID(k::Int32)
@@ -94,6 +31,58 @@ function poissrnd(d::ArrayDD)
         out.data[nn] = Float32(rand(Poisson(Float64(d.data[nn]))))
     end
     return out
+end
+
+function calcresiduum(model::ArrayDD,data::ArrayDD)
+    residuum = ArrayDD(model.sz);
+    for nn=1:model.sz*model.sz
+        residuum.data[nn]=data.data[nn]-model.data[nn]
+    end
+    return residuum
+end
+
+
+function makepdf!(a::ArrayDD)
+#make all elements sum to 1
+mysum=0;
+for nn=1:a.sz*a.sz
+    a.data[nn]=max(0,a.data[nn])
+    mysum+=a.data[nn]
+end
+for nn=1:a.sz*a.sz
+    a.data[nn]/=mysum
+end
+end
+
+function makecdf!(a::ArrayDD)
+#make the array a normalized CDF
+makepdf!(a)
+for nn=2:a.sz*a.sz
+    a.data[nn]+=a.data[nn-1];
+end
+end
+
+function arrayrand!(a::ArrayDD)
+#pull random number from pdf array
+#this converts input to cdf
+    makecdf!(a)
+    r=rand()
+    nn=1
+    while a.data[nn]<r
+        nn+=1
+    end
+    ii=rem(nn,a.sz)
+    jj=ceil(nn/a.sz)
+    return ii,jj 
+end
+    
+function arraypdf(a::ArrayDD,ii::Int32,jj::Int32)
+#calculate probability at pixel index
+mysum=0;
+for nn=1:a.sz*a.sz
+    mysum+=max(1,a.data[nn]);
+end
+  return max(1,a.data[ii,jj])/mysum
 end
 
 function curandn()
@@ -235,7 +224,18 @@ function accept_move(rjs::RJStructDD, currentstate::StateFlatBg, teststate::Stat
     roitest = ArrayDD(rjs.sz)
     genmodel_2Dgauss!(currentstate, rjs, roi)
     genmodel_2Dgauss!(teststate, rjs, roitest)
-    α = likelihoodratio(roi, roitest, rjs.data)
+    if minimum(teststate.photons)<0
+        println(currentstate)
+        println(teststate)
+    end
+
+    LR=likelihoodratio(roi, roitest, rjs.data)
+    PR=1
+    for nn=1:teststate.n
+        PR*=priorpdf(rjs.prior_photons,teststate.photons[nn])/
+            priorpdf(rjs.prior_photons,currentstate.photons[nn])        
+    end
+    α = PR*LR
     return α
 end
 
@@ -244,8 +244,20 @@ function accept_bg(rjs::RJStructDD, currentstate::StateFlatBg, teststate::StateF
     return rand()
 end
 
-function accept_add()
-    return rand()
+function accept_add(rjs::RJStructDD, currentstate::StateFlatBg, teststate::StateFlatBg)
+    roi = ArrayDD(rjs.sz)
+    roitest = ArrayDD(rjs.sz)
+    genmodel_2Dgauss!(currentstate, rjs, roi)
+    genmodel_2Dgauss!(teststate, rjs, roitest)
+    LLR = likelihoodratio(roi, roitest, rjs.data)
+    #proposal probability
+    residuum=calcresiduum(roitest,rjs.data)   
+    jj=Int32(min(roi.sz,max(1,round(teststate.x[end]))))
+    ii=Int32(min(roi.sz,max(1,round(teststate.y[end]))))
+    p=arraypdf(roitest,ii,jj)
+    α = LLR*(roi.sz+rjs.bndpixels)^2/p
+    #println(("add: ",α,ii,jj,teststate.photons[end]))
+    return α
 end
 
 function accept_remove()
@@ -267,22 +279,24 @@ function propose_move(rjs::RJStructDD, currentstate::StateFlatBg)
     # get an emitter
     ID = randID(currentstate.n)
     # move the emitter
-    move_emitter!(ID,teststate.x,teststate.y,teststate.photons,rjs.xy_std,rjs.I_std)
+    move_emitter!(ID,teststate.x,teststate.y,teststate.photons,rjs)
     return teststate
 end
-function move_emitter!(ID::Int32,x::CuArray,y::CuArray,photons::CuArray,xy_std::Float32,i_std::Float32) 
-    @cuda move_emitter_CUDA!(ID,x,y,photons,xy_std,i_std)
+function move_emitter!(ID::Int32,x::CuArray,y::CuArray,photons::CuArray,rjs::RJStructDD) 
+    @cuda move_emitter_CUDA!(ID,x,y,photons,rjs.xy_std,rjs.I_std)
 end
 function move_emitter_CUDA!(ID::Int32,x,y,photons,xy_std::Float32,i_std::Float32)
     x[ID]+=xy_std*curandn()
     y[ID]+=xy_std*curandn()
     photons[ID]+=i_std*curandn()
+    photons[ID]=max(0,photons[ID])
     return nothing
 end
-function move_emitter!(ID::Int32,x::Vector{Float32},y::Vector{Float32},photons::Vector{Float32},xy_std::Float32,i_std::Float32) 
-    x[ID]+=xy_std*randn()
-    y[ID]+=xy_std*randn()
-    photons[ID]+=i_std*randn()
+function move_emitter!(ID::Int32,x::Vector{Float32},y::Vector{Float32},photons::Vector{Float32},rjs::RJStructDD) 
+    x[ID]+=rjs.xy_std*randn()
+    y[ID]+=rjs.xy_std*randn()
+    photons[ID]+=rjs.I_std*randn()
+    photons[ID]=max(rjs.prior_photons.θ_start,photons[ID])
     return nothing
 end
 
@@ -292,13 +306,42 @@ function propose_bg()
     return rand()
 end
 
-function propose_add()
-    return rand()
+
+## Add and remove -------------
+
+function propose_add(rjs::RJStructDD, currentstate::StateFlatBg)
+
+    teststate = StateFlatBg(currentstate)
+    
+    #calc residum
+    roi = ArrayDD(rjs.sz)
+    roitest = ArrayDD(rjs.sz)
+    genmodel_2Dgauss!(currentstate, rjs, roi)
+    genmodel_2Dgauss!(teststate, rjs, roitest)
+    residuum=calcresiduum(roitest,rjs.data)   
+    #pick pixel
+    ii,jj=arrayrand!(residuum)
+
+    #pick intensity from prior
+    photons=priorrnd(rjs.prior_photons)
+    if photons<0
+        println(photons)
+    end
+    #add new emitter
+    addemitter!(teststate,Float32(ii),Float32(jj),photons)
+
+    return teststate
 end
+
 
 function propose_remove()
     return rand()
 end
+
+## ---------------------------
+
+
+
 
 function propose_split()
     return rand()

@@ -61,7 +61,7 @@ function jtrand(rjs::RJMCMCStruct) #select a jump type
         if jt==rjs.njumptypes
             break
         end
-        tmp=rjs.jumpprobability[jt]
+        tmp+=rjs.jumpprobability[jt]
     end    
     return jt
 end
@@ -85,6 +85,7 @@ end
 function runchain!(rjs::RJMCMCStruct,rjc::RJChain,iterations,mhs)
     for nn=1:iterations-1
         jt=jtrand(rjs)
+        #println(jt)
         rjc.jumptypes[nn]=jt;
 
         #get proposal
