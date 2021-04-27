@@ -1,6 +1,7 @@
 ## This file contains type defintions and constructors
 
 using CUDA
+abstract type PSF end
 
 ## StateFlatBg-------------
 abstract type StateFlatBg end
@@ -112,17 +113,18 @@ end
 ## RJStructDD ------------
 mutable struct RJStructDD # contains data and all static info for Direct Detection passed to BAMF functions 
     sz::Int32
-    σ::Float32
+    psf::PSF
     xy_std::Float32
     I_std::Float32
     data::ArrayDD
     bndpixels::Int32
     prior_photons::RJPrior
 end
-RJStructDD(sz,σ,xy_std,I_std) = RJStructDD(sz, σ, xy_std, I_std, ArrayDD(sz),Int32(2),RJPrior())
-RJStructDD(sz,σ,xy_std,I_std,data::ArrayDD) = RJStructDD(sz, σ, xy_std, I_std, data,Int32(2),RJPrior())
+RJStructDD(sz,psf,xy_std,I_std) = RJStructDD(sz, psf, xy_std, I_std, ArrayDD(sz),Int32(2),RJPrior())
+RJStructDD(sz,psf,xy_std,I_std,data::ArrayDD) = RJStructDD(sz, psf, xy_std, I_std, data,Int32(2),RJPrior())
 
 ## ------------------------------
+
 
 
 

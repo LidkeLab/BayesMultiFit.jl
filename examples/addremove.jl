@@ -10,6 +10,8 @@ using .RJMCMC
 using ImageView
 ImageView.closeall()
 
+## Scaling factor for testing
+zoom=1;
 
 ## make prior on emitter intensity distributions
 using Distributions
@@ -24,20 +26,24 @@ mypdf=pdf(g,x)
 plot(x,mypdf)
 prior_photons=BAMF.RJPrior(len,θ_start,θ_step,mypdf)
 
+## create a psf
+σ=Float32(1.3*zoom)
+psf=BAMF.PSF_gauss2D(σ)
 
-## create a dataset 
+## create the true state of a dataset 
+zoom=1;
 n=Int32(3)
-sz=Int32(16)
-sigma=1.3f0
-x=Vector{Float32}([sz/2,sz/2,sz/2])+randn(Float32,3)
-y=Vector{Float32}([sz/2,sz/2,sz/2])+randn(Float32,3)
+sz=Int32(16*zoom)
+sigma=1.3f0*zoom
+x=Vector{Float32}([sz/2,sz/2,sz/2])+zoom*randn(Float32,3)
+y=Vector{Float32}([sz/2,sz/2,sz/2])+zoom*randn(Float32,3)
 photons=Float32.(rand(g,3))
 bg=1f-4
 datastate=BAMF.StateFlatBg(n,x,y,photons,bg)
 
 ##  create a model then make noisy
 dataroi=BAMF.ArrayDD(sz)
-BAMF.genmodel_2Dgauss!(datastate,sz,sigma,dataroi.data)
+BAMF.genmodel!(datastate,sz,psf,dataroi)
 noisyroi=BAMF.poissrnd(dataroi)
 
 
@@ -45,7 +51,7 @@ noisyroi=BAMF.poissrnd(dataroi)
 xystd=sigma/10;
 istd=10;
 bndpixels=2
-myRJ=BAMF.RJStructDD(sz,sigma,xystd,istd,noisyroi,bndpixels,prior_photons)
+myRJ=BAMF.RJStructDD(sz,psf,xystd,istd,noisyroi,bndpixels,prior_photons)
 
 ## setup the RJMCMC.jl model
 #Jumptypes are: move, bg, add, remove, split, merge
@@ -62,20 +68,13 @@ myRJMCMC=RJMCMC.RJMCMCStruct(burnin,iterations,njumptypes,jumpprobability,propfu
 
 #create an intial state
 state1=BAMF.calcintialstate(myRJ)
-n=Int32(3)
-sz=Int32(16)
-sigma=1.3f0
-x=Vector{Float32}([sz/2,sz/2,sz/2])+randn(Float32,3)
-y=Vector{Float32}([sz/2,sz/2,sz/2])+randn(Float32,3)
-photons=Vector{Float32}([777,500,800])
-bg=1f-4
-
 
 ## run chain
 @time mychain=RJMCMC.buildchain(myRJMCMC,myRJ,state1)
 
 ## Display
-zoom=Int32(20)
+zm=Int32(round(20/zoom))
 jts=mychain.jumptypes
 plotly()
-BAMF.histogram2D(mychain.states,sz,zoom,noisyroi,datastate)
+BAMF.histogram2D(mychain.states,sz,zm,noisyroi,datastate)
+BAMF.histogram2D(mychain.states,sz,zm,datastate)
