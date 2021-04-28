@@ -24,9 +24,30 @@ function getxy(states::Vector{Any})
             y[cnt] = states[ss].y[nn]
         end
     end   
-
     return x,y 
+end
 
+function getn(states::Vector{Any})
+    maxemitters = 0
+    nstates=length(states) 
+
+    traj_n=Vector{Int32}((undef),nstates)
+    for nn = 1:nstates
+        traj_n[nn]=states[nn].n
+        maxemitters=max(maxemitters,states[nn].n)
+    end
+
+    posterior_n=zeros(Float32, maxemitters+1) 
+    for nn = 1:nstates
+        posterior_n[states[nn].n+1]+=states[nn].n
+    end
+    posterior_n=posterior_n/sum(posterior_n)
+
+    cntmax = maximum(posterior_n)
+    coords = findall(x -> x == cntmax, posterior_n)
+    map_n=coords[1]-1
+
+    return map_n,posterior_n,traj_n
 end
 
 function histogram2D(states::Vector{Any}, sz::Int32, zoom::Int32)
@@ -59,8 +80,8 @@ function histogram2D(states::Vector{Any}, sz::Int32, zoom::Int32, truestate::Sta
     for nn = 1:truestate.n
         plot!(fig, circleShape(truestate.x[nn], truestate.y[nn], dcircle), color=:blue)  
     end
-    # histogram2d!(fig, x, y, nbins=xbins, ybins, aspect_ratio=:equal, show_empty_bins=false) 
-    scatter!(fig, x, y) 
+    histogram2d!(fig, x, y, nbins=xbins, ybins, aspect_ratio=:equal, show_empty_bins=false) 
+    # scatter!(fig, x, y) 
     return fig
 end
 

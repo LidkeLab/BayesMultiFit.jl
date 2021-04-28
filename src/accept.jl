@@ -4,22 +4,22 @@
 # bg, move, add,remove, split, merge
 
 
-function accept_move(rjs::RJStructDD, currentstate::StateFlatBg, teststate::StateFlatBg)   
+function accept_move(rjs::RJStructDD, currentstate::StateFlatBg, teststate::StateFlatBg,idx::Int32)   
+    
+    if idx<1 return 0 end
     roi = ArrayDD(rjs.sz)
     roitest = ArrayDD(rjs.sz)
     genmodel!(currentstate, rjs, roi)
     genmodel!(teststate, rjs, roitest)
-    if minimum(teststate.photons)<0
+    if (teststate.n>0)&& (minimum(teststate.photons)<0)
         println(currentstate)
         println(teststate)
     end
 
     LR=likelihoodratio(roi, roitest, rjs.data)
-    PR=1
-    for nn=1:teststate.n
-        PR*=priorpdf(rjs.prior_photons,teststate.photons[nn])/
-            priorpdf(rjs.prior_photons,currentstate.photons[nn])        
-    end
+    PR=priorpdf(rjs.prior_photons,teststate.photons[idx])/
+        priorpdf(rjs.prior_photons,currentstate.photons[idx])        
+    
     α = PR*LR
     return α
 end
@@ -29,7 +29,7 @@ function accept_bg(rjs::RJStructDD, currentstate::StateFlatBg, teststate::StateF
     return rand()
 end
 
-function accept_add(rjs::RJStructDD, currentstate::StateFlatBg, teststate::StateFlatBg)
+function accept_add(rjs::RJStructDD, currentstate::StateFlatBg, teststate::StateFlatBg,idx::Int32)
     roi = ArrayDD(rjs.sz)
     roitest = ArrayDD(rjs.sz)
     genmodel!(currentstate, rjs, roi)
@@ -37,22 +37,54 @@ function accept_add(rjs::RJStructDD, currentstate::StateFlatBg, teststate::State
     LLR = likelihoodratio(roi, roitest, rjs.data)
     #proposal probability
     residuum=calcresiduum(roitest,rjs.data)   
-    jj=Int32(min(roi.sz,max(1,round(teststate.x[end]))))
-    ii=Int32(min(roi.sz,max(1,round(teststate.y[end]))))
+    jj=Int32(min(roi.sz,max(1,round(teststate.x[idx]))))
+    ii=Int32(min(roi.sz,max(1,round(teststate.y[idx]))))
     p=arraypdf(roitest,ii,jj)
     α = LLR*(roi.sz+rjs.bndpixels)^2/p
     #println(("add: ",α,ii,jj,teststate.photons[end]))
     return α
 end
 
-function accept_remove()
-    return rand()
+function accept_remove(rjs::RJStructDD, currentstate::StateFlatBg, teststate::StateFlatBg,idx::Int32)
+    #use the inverse function
+    if idx<1 return 0 end
+    α=accept_add(rjs,teststate,currentstate,idx)
+    return 1/α
 end
 
-function accept_split()
-    return rand()
+function accept_split(rjs::RJStructDD, currentstate::StateFlatBg, teststate::StateFlatBg,vararg=(Int32,Int32,Float32,Float32,Float32))
+
+    idx1,idx2,u1,u2,u3=vararg
+
+    roi = ArrayDD(rjs.sz)
+    roitest = ArrayDD(rjs.sz)
+    genmodel!(currentstate, rjs, roi)
+    genmodel!(teststate, rjs, roitest)
+    LLR = likelihoodratio(roi, roitest, rjs.data)
+    
+    #proposal probability
+    split_std = rjs.split_std
+    N=Normal(0,split_std)
+    p=pdf(N,u2)*pdf(N,u3)
+
+    #ratio on intensity priors
+    IR=priorpdf(rjs.prior_photons,teststate.photons[idx1])*priorpdf(rjs.prior_photons,teststate.photons[idx2])/
+        priorpdf(rjs.prior_photons,currentstate.photons[idx1])  
+
+    #ratio of XY priors 
+    XYPR=1/(roi.sz+rjs.bndpixels)^2    
+    #Jacobian    
+    J=currentstate.photons[idx1]/(1-u1)^2
+    PR=LLR*IR*XYPR/p*J
+    α = PR
+    #println(("add: ",α,ii,jj,teststate.photons[end]))
+    return α
+
 end
 
-function accept_merge()
-    return rand()
+function accept_merge(rjs::RJStructDD, currentstate::StateFlatBg, teststate::StateFlatBg,vararg=(Int32,Int32,Float32,Float32,Float32))
+    idx1,idx2,u1,u2,u3=vararg
+    if idx1<1 return 0 end
+    α=accept_split(rjs,teststate,currentstate,(idx1,idx2,u1,u2,u3))
+    return 1/α
 end

@@ -85,14 +85,14 @@ end
 function runchain!(rjs::RJMCMCStruct,rjc::RJChain,iterations,mhs)
     for nn=1:iterations-1
         jt=jtrand(rjs)
-        #println(jt)
+        # println(jt)
         rjc.jumptypes[nn]=jt;
 
         #get proposal
-        mtest=rjs.proposalfuns[jt](mhs,rjc.states[nn])     
+        mtest,vararg=rjs.proposalfuns[jt](mhs,rjc.states[nn])     
 
         #calculate acceptance probability
-        α=rjs.acceptfuns[jt](mhs,rjc.states[nn],mtest)
+        α=rjs.acceptfuns[jt](mhs,rjc.states[nn],mtest,vararg)
         rjc.α[nn+1]=α;
 
         #update chain

@@ -53,6 +53,30 @@ function addemitter!(s::StateFlatBg,x::Float32,y::Float32,photons::Float32)
     push!(s.photons,photons)
 end
 
+function removeemitter!(s::StateFlatBg,idx::Int32)
+    s.n=s.n-1
+    deleteat!(s.x,idx)
+    deleteat!(s.y,idx)
+    deleteat!(s.photons,idx)
+end
+
+function findclosest(s::StateFlatBg,idx::Int32)
+    if (s.n<2)||(idx<1) return 0 end
+    
+    mindis=1f5 #big
+    nn=1
+    for nn=1:s.n
+        if nn!=idx
+            dis=(s.x[idx]-s.x[nn])^2+(s.y[idx]-s.y[nn])
+            if dis<mindis
+                mindis=dis
+                idx=nn
+            end
+        end
+    end
+    return Int32(nn)
+end
+
 ## ------------------
 
 
@@ -116,12 +140,13 @@ mutable struct RJStructDD # contains data and all static info for Direct Detecti
     psf::PSF
     xy_std::Float32
     I_std::Float32
+    split_std::Float32
     data::ArrayDD
     bndpixels::Int32
     prior_photons::RJPrior
 end
-RJStructDD(sz,psf,xy_std,I_std) = RJStructDD(sz, psf, xy_std, I_std, ArrayDD(sz),Int32(2),RJPrior())
-RJStructDD(sz,psf,xy_std,I_std,data::ArrayDD) = RJStructDD(sz, psf, xy_std, I_std, data,Int32(2),RJPrior())
+RJStructDD(sz,psf,xy_std,I_std,split_std) = RJStructDD(sz, psf, xy_std, I_std, split_std,ArrayDD(sz),Int32(2),RJPrior())
+RJStructDD(sz,psf,xy_std,I_std,split_std,data::ArrayDD) = RJStructDD(sz, psf, xy_std, I_std, split_std,data,Int32(2),RJPrior())
 
 ## ------------------------------
 
