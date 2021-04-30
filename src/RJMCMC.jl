@@ -1,10 +1,9 @@
 module RJMCMC
 
+using Plots
+
 include("BAMF.jl")
 using .BAMF
-
-burnlength=1000;
-chainlength=1000;
 
 mutable struct RJMCMCStruct
     burnin::Int32
@@ -24,7 +23,7 @@ mutable struct RJChain  #this is the main output of RJMCMC
 end
 RJChain(n::Int32)=RJChain(n,
 Vector{Any}(undef,n),
-Vector{Int32}(undef,n),
+zeros(Int32,n),
 Vector{Float32}(undef,n),
 Vector{Bool}(undef,n),
 )
@@ -106,6 +105,38 @@ function runchain!(rjs::RJMCMCStruct,rjc::RJChain,iterations,mhs)
        
         #println((nn,jt,α))
     end
+end
+
+
+#tools
+
+function showacceptratio(rjc::RJChain)
+    steps=rjc.n 
+    nstates=maximum(rjc.jumptypes)
+    attempts=zeros(Int32,nstates)
+    accepts=zeros(Float32,nstates)
+
+    for nn=1:steps-1
+        jt=rjc.jumptypes[nn]
+        attempts[jt]+=1
+        if rjc.accept[nn+1]
+            accepts[jt]+=1
+        end
+    end
+
+
+    for nn=1:nstates
+        if attempts[nn]>0
+            accepts[nn]=accepts[nn]./attempts[nn] 
+        else
+            accepts[nn]=0
+        end
+    end
+
+    gr()
+    plt=bar((1:nstates),accepts)
+    display(plt)       
+    return accepts,plt
 end
 
 

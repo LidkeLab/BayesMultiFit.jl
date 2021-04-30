@@ -2,9 +2,12 @@
 
 using CUDA
 abstract type PSF end
+abstract type BAMFState end
+abstract type BAMFData end
 
 ## StateFlatBg-------------
-abstract type StateFlatBg end
+abstract type StateFlatBg <: BAMFState end
+
 mutable struct StateFlatBg_CUDA <: StateFlatBg # this gets saved in chain
     n::Int32
     x::CuArray{Float32}
@@ -77,11 +80,24 @@ function findclosest(s::StateFlatBg,idx::Int32)
     return Int32(nn)
 end
 
+function findother(s::StateFlatBg,idx::Int32)
+    if (s.n<2)||(idx<1) return 0 end
+    
+    nn=ceil(s.n*rand())
+    while nn==idx
+        nn=ceil(s.n*rand())
+    end
+
+    return Int32(nn)
+end
+
+
+
 ## ------------------
 
 
 ## ArrayDD----------
-abstract type ArrayDD end
+abstract type ArrayDD <: BAMFData end
 mutable struct ArrayDD_CUDA <: ArrayDD  # direct detection data 
     sz::Int32
     data::CuArray{Float32,2}

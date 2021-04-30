@@ -80,8 +80,45 @@ function histogram2D(states::Vector{Any}, sz::Int32, zoom::Int32, truestate::Sta
     for nn = 1:truestate.n
         plot!(fig, circleShape(truestate.x[nn], truestate.y[nn], dcircle), color=:blue)  
     end
-    histogram2d!(fig, x, y, nbins=xbins, ybins, aspect_ratio=:equal, show_empty_bins=false) 
+    histogram2d!(fig, x, y, nbins=xbins, ybins, aspect_ratio=:equal, show_empty_bins=false,yflip=true) 
     # scatter!(fig, x, y) 
     return fig
 end
+
+#"Show model and data vs chain step"
+function showoverlay(states::Vector{Any},rjs::RJStructDD)
+    len=length(states)
+    sz=rjs.data.sz
+    d=Array{Float32}(undef,(sz,sz,len))
+    m=Array{Float32}(undef,(sz,sz,len))
+    tmp=ArrayDD(sz)
+    for nn=1:len
+        d[:,:,nn]=rjs.data.data     
+        model=genmodel!(states[nn],rjs,tmp)
+        m[:,:,nn]=tmp.data
+    end
+    globmax=maximum((maximum(m),maximum(d)))
+    d=d./globmax
+    m=m./globmax
+    out=cat(dims=2,d,m,d-m)
+    println(size(out))
+    imshow(out)
+end
+
+function plotstate(truestate::StateFlatBg,foundstate::StateFlatBg)
+    fig=plot()
+    dcircle = 0.5
+    for nn = 1:truestate.n
+        plot!(fig, circleShape(truestate.x[nn], truestate.y[nn], dcircle), color=:blue)  
+    end
+
+    for nn = 1:foundstate.n
+        plot!(fig, circleShape(foundstate.x[nn], foundstate.y[nn], dcircle), color=:red)  
+    end
+    
+    return fig
+end
+
+
+
 

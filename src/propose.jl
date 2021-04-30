@@ -27,6 +27,10 @@ function move_emitter!(ID::Int32, x::Vector{Float32}, y::Vector{Float32}, photon
     if ID < 1 return nothing end
     x[ID] += rjs.xy_std * randn()
     y[ID] += rjs.xy_std * randn()
+
+    x[ID]=max(0-rjs.bndpixels,min(rjs.sz+rjs.bndpixels,x[ID]))
+    y[ID]=max(0-rjs.bndpixels,min(rjs.sz+rjs.bndpixels,y[ID]))
+
     photons[ID] += rjs.I_std * randn()
     photons[ID] = max(rjs.prior_photons.θ_start, photons[ID])
     return nothing
@@ -83,7 +87,7 @@ end
 
 function propose_split(rjs::RJStructDD, currentstate::StateFlatBg)
     
-    println("split")
+    # println("split")
 
     teststate = StateFlatBg(currentstate)
     # get an emitter
@@ -94,7 +98,7 @@ function propose_split(rjs::RJStructDD, currentstate::StateFlatBg)
 	mux = teststate.x[idx]
     muy = teststate.y[idx]
 
-    split_std = 1
+    split_std = rjs.split_std
     u1 = rand(Float32)
 	u2 = split_std * randn(Float32)
 	u3 = split_std * randn(Float32)
@@ -117,13 +121,15 @@ end
 
 function propose_merge(rjs::RJStructDD, currentstate::StateFlatBg)
     
-    if currentstate.n<2 return 0 end
     
-    println("merge")
+    # println("merge")
     teststate = StateFlatBg(currentstate)
+    if currentstate.n<2 return teststate,(Int32(0),Int32(0),0f1,0f1,0f1) end
+
+
     # get an emitter
     idx1 = randID(currentstate.n)
-    idx2 = findclosest(currentstate,idx1)
+    idx2 = findother(currentstate,idx1)
 
     #keep the lower idx
     if idx1>idx2

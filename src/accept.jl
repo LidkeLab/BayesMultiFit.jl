@@ -76,7 +76,7 @@ function accept_split(rjs::RJStructDD, currentstate::StateFlatBg, teststate::Sta
     #Jacobian    
     J=currentstate.photons[idx1]/(1-u1)^2
     PR=LLR*IR*XYPR/p*J
-    α = PR
+    α = PR/teststate.n 
     #println(("add: ",α,ii,jj,teststate.photons[end]))
     return α
 
