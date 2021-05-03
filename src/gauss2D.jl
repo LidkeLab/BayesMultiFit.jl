@@ -10,7 +10,7 @@ end
 function genmodel_gauss2D!(s::StateFlatBg, sz::Int32, psf::PSF_gauss2D, model::Array{Float32,2})
     for ii = 1:sz
         for jj = 1:sz
-            model[ii,jj] = s.bg + 1f-4
+            model[ii,jj] = s.bg
             for nn = 1:s.n
                 model[ii,jj] += s.photons[nn] / (2 * π * psf.σ^2) *
                 exp(-(ii - s.y[nn])^2 / (2 * psf.σ^2)) *

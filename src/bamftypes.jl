@@ -157,7 +157,7 @@ mutable struct RJStructDD # contains data and all static info for Direct Detecti
     xy_std::Float32
     I_std::Float32
     split_std::Float32
-    data::ArrayDD
+    data::BAMFData
     bndpixels::Int32
     prior_photons::RJPrior
 end

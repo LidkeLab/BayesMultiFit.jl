@@ -11,26 +11,34 @@ using ImageView
 ImageView.closeall()
 
 ## Setup
-zoom=1      #Scaling factor for testing
-n=Int32(10)  #number of emitters
-ps=3f0        #position scaling 
+zoom=2      #Scaling factor for testing
+n=Int32(4)  #number of emitters
+ps=2f0      #position scaling 
 
 ## make prior on emitter intensity distributions
 using Distributions
-α=Float32(10)
-θ=Float32(200)
+α=Float32(2)
+θ=Float32(500)
 g=Gamma(α,θ)
 len=Int32(1024)
 θ_start=Float32(1)
 θ_step=Float32(5.0)
 pdf_x=range(θ_start,step=θ_step,length=len)
 mypdf=pdf(g,pdf_x)
-plot(pdf_x,mypdf)
+plt=plot(pdf_x,mypdf)
+display(plt)
 prior_photons=BAMF.RJPrior(len,θ_start,θ_step,mypdf)
 
 ## create a psf
-σ=Float32(1.3*zoom)
-psf=BAMF.PSF_gauss2D(σ)
+#gauss
+# σ=Float32(1.3*zoom)
+# psf=BAMF.PSF_gauss2D(σ)
+#airy
+pixelsize=.05
+nₐ=1.4
+λ=.6
+ν=Float32(2π*nₐ/λ)*pixelsize/zoom
+psf=BAMF.PSF_airy2D(ν)
 
 ## create the true state of a dataset 
 
@@ -62,8 +70,8 @@ jumpprobability=[1,0,.1,.1,.1,.1] #Move only
 jumpprobability=jumpprobability/sum(jumpprobability)
 
 # create an RJMCMC structure with all model info
-iterations=10000
-burnin=10000
+iterations=1000
+burnin=1
 acceptfuns=[BAMF.accept_move,BAMF.accept_bg,BAMF.accept_add,BAMF.accept_remove,BAMF.accept_split,BAMF.accept_merge] #array of functions
 propfuns=[BAMF.propose_move,BAMF.propose_bg,BAMF.propose_add,BAMF.propose_remove,BAMF.propose_split,BAMF.propose_merge] #array of functions
 myRJMCMC=RJMCMC.RJMCMCStruct(burnin,iterations,njumptypes,jumpprobability,propfuns,acceptfuns)
@@ -82,9 +90,8 @@ BAMF.histogram2D(mychain.states,sz,zm,noisyroi,datastate)
 plt=BAMF.histogram2D(mychain.states,sz,zm,datastate)
 display(plt)
 
-plot(traj_n)
-
 map_n,posterior_n,traj_n=BAMF.getn(mychain.states)
+plot(traj_n)
 
 println(map_n)
 println(posterior_n)

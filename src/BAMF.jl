@@ -11,6 +11,7 @@ using CUDA
 include("bamftypes.jl")
 include("helpers.jl")
 include("gauss2D.jl")
+include("airy2D.jl")
 include("propose.jl")
 include("accept.jl")
 include("display.jl")
