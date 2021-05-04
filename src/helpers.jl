@@ -1,73 +1,33 @@
 ## Helper functions
+"return random number between 1 and k"
 function randID(k::Int32)
     return Int32(ceil(k * rand()))
 end
 
-function poissrnd!(d::ArrayDD)
-    for nn = 1:d.sz^2
-        d.data[nn] = Float32(rand(Poisson(Float64(d.data[nn]))))
+"Generic Likelihood calculation using Poisson noise statistics"
+function likelihoodratio(m::Array{Float32}, mtest::Array{Float32}, d::Array{Float32})
+    nelem=prod(size(m))
+    minmodel=1f-6 #to avoid division by zero and log of zero
+    LLR = 0;
+    for ii = 1:nelem
+        LLR += m[ii] - mtest[ii] + d[ii] * log(max(mtest[ii],minmodel) / max(m[ii],minmodel));   
+    end
+    L = exp(LLR)
+    if L < 0
+        println(L, LLR)
+    end
+    return exp(LLR)
+end
+
+"In place Poisson noise corruptor"
+function poissrnd!(d::Array{Float32})
+    nelem=prod(size(d))
+    for nn = 1:nelem
+        d[nn] = Float32(rand(Poisson(Float64(d[nn]))))
     end
 end
-function poissrnd(d::ArrayDD)
-    out = ArrayDD(d.sz)
-    for nn = 1:d.sz^2
-        out.data[nn] = Float32(rand(Poisson(Float64(d.data[nn]))))
-    end
-    return out
-end
 
-function calcresiduum(model::ArrayDD,data::ArrayDD)
-    residuum = ArrayDD(model.sz);
-    for nn=1:model.sz*model.sz
-        residuum.data[nn]=data.data[nn]-model.data[nn]
-    end
-    return residuum
-end
-
-
-function makepdf!(a::ArrayDD)
-#make all elements sum to 1
-mysum=0;
-for nn=1:a.sz*a.sz
-    a.data[nn]=max(0,a.data[nn])
-    mysum+=a.data[nn]
-end
-for nn=1:a.sz*a.sz
-    a.data[nn]/=mysum
-end
-end
-
-function makecdf!(a::ArrayDD)
-#make the array a normalized CDF
-makepdf!(a)
-for nn=2:a.sz*a.sz
-    a.data[nn]+=a.data[nn-1];
-end
-end
-
-function arrayrand!(a::ArrayDD)
-#pull random number from pdf array
-#this converts input to cdf
-    makecdf!(a)
-    r=rand()
-    nn=1
-    while a.data[nn]<r
-        nn+=1
-    end
-    ii=rem(nn,a.sz)
-    jj=ceil(nn/a.sz)
-    return ii,jj 
-end
-    
-function arraypdf(a::ArrayDD,ii::Int32,jj::Int32)
-#calculate probability at pixel index
-mysum=0;
-for nn=1:a.sz*a.sz
-    mysum+=max(1,a.data[nn]);
-end
-  return max(1,a.data[ii,jj])/mysum
-end
-
+"An inexpensive Normal random number generator for CUDA"
 function curandn()
     r=0;
     for ii=1:12
@@ -75,3 +35,18 @@ function curandn()
     end
     return r-6f0
 end
+
+"Intial guess for 1 source given data."
+function calcintialstate(rjs::RJStruct) # find initial state for direct detection data 
+    d = rjs.data.data
+    state1 = StateFlatBg()
+    state1.n = 1
+    state1.bg = minimum(d)
+    roimax = maximum(d)
+    coords = findall(x -> x == roimax, d)
+    state1.y[1] = coords[1].I[1]
+    state1.x[1] = coords[1].I[2]
+    state1.photons[1] = priorrnd(rjs.prior_photons)
+    return state1
+end
+

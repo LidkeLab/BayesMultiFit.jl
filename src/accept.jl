@@ -4,11 +4,11 @@
 # bg, move, add,remove, split, merge
 
 
-function accept_move(rjs::RJStructDD, currentstate::StateFlatBg, teststate::StateFlatBg,idx::Int32)   
+function accept_move(rjs::RJStruct, currentstate::BAMFState, teststate::BAMFState,idx::Int32)   
     
     if idx<1 return 0 end
-    roi = ArrayDD(rjs.sz)
-    roitest = ArrayDD(rjs.sz)
+    roi = genBAMFData(rjs)
+    roitest = genBAMFData(rjs)
     genmodel!(currentstate, rjs, roi)
     genmodel!(teststate, rjs, roitest)
     if (teststate.n>0)&& (minimum(teststate.photons)<0)
@@ -24,14 +24,14 @@ function accept_move(rjs::RJStructDD, currentstate::StateFlatBg, teststate::Stat
     return α
 end
 
-function accept_bg(rjs::RJStructDD, currentstate::StateFlatBg, teststate::StateFlatBg)
+function accept_bg(rjs::RJStruct, currentstate::BAMFState, teststate::BAMFState)
 
     return rand()
 end
 
-function accept_add(rjs::RJStructDD, currentstate::StateFlatBg, teststate::StateFlatBg,idx::Int32)
-    roi = ArrayDD(rjs.sz)
-    roitest = ArrayDD(rjs.sz)
+function accept_add(rjs::RJStruct, currentstate::BAMFState, teststate::BAMFState,idx::Int32)
+    roi = genBAMFData(rjs)
+    roitest = genBAMFData(rjs)
     genmodel!(currentstate, rjs, roi)
     genmodel!(teststate, rjs, roitest)
     LLR = likelihoodratio(roi, roitest, rjs.data)
@@ -39,25 +39,25 @@ function accept_add(rjs::RJStructDD, currentstate::StateFlatBg, teststate::State
     residuum=calcresiduum(roitest,rjs.data)   
     jj=Int32(min(roi.sz,max(1,round(teststate.x[idx]))))
     ii=Int32(min(roi.sz,max(1,round(teststate.y[idx]))))
-    p=arraypdf(roitest,ii,jj)
+    p=arraypdf(residuum,ii,jj)
     α = LLR*(roi.sz+rjs.bndpixels)^2/p
     #println(("add: ",α,ii,jj,teststate.photons[end]))
     return α
 end
 
-function accept_remove(rjs::RJStructDD, currentstate::StateFlatBg, teststate::StateFlatBg,idx::Int32)
+function accept_remove(rjs::RJStruct, currentstate::BAMFState, teststate::BAMFState,idx::Int32)
     #use the inverse function
     if idx<1 return 0 end
     α=accept_add(rjs,teststate,currentstate,idx)
     return 1/α
 end
 
-function accept_split(rjs::RJStructDD, currentstate::StateFlatBg, teststate::StateFlatBg,vararg=(Int32,Int32,Float32,Float32,Float32))
+function accept_split(rjs::RJStruct, currentstate::BAMFState, teststate::BAMFState,vararg=(Int32,Int32,Float32,Float32,Float32))
 
     idx1,idx2,u1,u2,u3=vararg
 
-    roi = ArrayDD(rjs.sz)
-    roitest = ArrayDD(rjs.sz)
+    roi = genBAMFData(rjs)
+    roitest = genBAMFData(rjs)
     genmodel!(currentstate, rjs, roi)
     genmodel!(teststate, rjs, roitest)
     LLR = likelihoodratio(roi, roitest, rjs.data)
@@ -82,7 +82,7 @@ function accept_split(rjs::RJStructDD, currentstate::StateFlatBg, teststate::Sta
 
 end
 
-function accept_merge(rjs::RJStructDD, currentstate::StateFlatBg, teststate::StateFlatBg,vararg=(Int32,Int32,Float32,Float32,Float32))
+function accept_merge(rjs::RJStruct, currentstate::BAMFState, teststate::BAMFState,vararg=(Int32,Int32,Float32,Float32,Float32))
     idx1,idx2,u1,u2,u3=vararg
     if idx1<1 return 0 end
     α=accept_split(rjs,teststate,currentstate,(idx1,idx2,u1,u2,u3))

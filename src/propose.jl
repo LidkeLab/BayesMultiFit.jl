@@ -5,7 +5,7 @@
 # bg, move, add,remove, split, merge
 
 
-function propose_move(rjs::RJStructDD, currentstate::StateFlatBg)
+function propose_move(rjs::RJStruct, currentstate::BAMFState)
     teststate = StateFlatBg(currentstate)
     # get an emitter
     idx = randID(currentstate.n)
@@ -13,7 +13,7 @@ function propose_move(rjs::RJStructDD, currentstate::StateFlatBg)
     move_emitter!(idx, teststate.x, teststate.y, teststate.photons, rjs)
     return teststate, idx
 end
-function move_emitter!(ID::Int32, x::CuArray, y::CuArray, photons::CuArray, rjs::RJStructDD) 
+function move_emitter!(ID::Int32, x::CuArray, y::CuArray, photons::CuArray, rjs::RJStruct) 
     @cuda move_emitter_CUDA!(ID, x, y, photons, rjs.xy_std, rjs.I_std)
 end
 function move_emitter_CUDA!(ID::Int32, x, y, photons, xy_std::Float32, i_std::Float32)
@@ -23,7 +23,7 @@ function move_emitter_CUDA!(ID::Int32, x, y, photons, xy_std::Float32, i_std::Fl
     photons[ID] = max(0, photons[ID])
     return nothing
 end
-function move_emitter!(ID::Int32, x::Vector{Float32}, y::Vector{Float32}, photons::Vector{Float32}, rjs::RJStructDD) 
+function move_emitter!(ID::Int32, x::Vector{Float32}, y::Vector{Float32}, photons::Vector{Float32}, rjs::RJStruct) 
     if ID < 1 return nothing end
     x[ID] += rjs.xy_std * randn()
     y[ID] += rjs.xy_std * randn()
@@ -45,13 +45,13 @@ end
 
 ## Add and remove -------------
 
-function propose_add(rjs::RJStructDD, currentstate::StateFlatBg)
+function propose_add(rjs::RJStruct, currentstate::BAMFState)
 
     teststate = StateFlatBg(currentstate)
     
     # calc residum
-    roi = ArrayDD(rjs.sz)
-    roitest = ArrayDD(rjs.sz)
+    roi = genBAMFData(rjs)
+    roitest = genBAMFData(rjs)
     genmodel!(currentstate, rjs, roi)
     genmodel!(teststate, rjs, roitest)
     residuum = calcresiduum(roitest, rjs.data)   
@@ -70,7 +70,7 @@ function propose_add(rjs::RJStructDD, currentstate::StateFlatBg)
 end
 
 
-function propose_remove(rjs::RJStructDD, currentstate::StateFlatBg)
+function propose_remove(rjs::RJStruct, currentstate::BAMFState)
     teststate = StateFlatBg(currentstate)
     # get an emitter
     idx = randID(currentstate.n)
@@ -85,7 +85,7 @@ end
 
 
 
-function propose_split(rjs::RJStructDD, currentstate::StateFlatBg)
+function propose_split(rjs::RJStruct, currentstate::BAMFState)
     
     # println("split")
 
@@ -119,7 +119,7 @@ function propose_split(rjs::RJStructDD, currentstate::StateFlatBg)
 end
 
 
-function propose_merge(rjs::RJStructDD, currentstate::StateFlatBg)
+function propose_merge(rjs::RJStruct, currentstate::BAMFState)
     
     
     # println("merge")

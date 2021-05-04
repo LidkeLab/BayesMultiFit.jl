@@ -13,7 +13,7 @@ ImageView.closeall()
 ## Setup
 zoom=2      #Scaling factor for testing
 n=Int32(4)  #number of emitters
-ps=2f0      #position scaling 
+ps=3f0      #position scaling 
 
 ## make prior on emitter intensity distributions
 using Distributions
@@ -31,17 +31,16 @@ prior_photons=BAMF.RJPrior(len,θ_start,θ_step,mypdf)
 
 ## create a psf
 #gauss
-# σ=Float32(1.3*zoom)
-# psf=BAMF.PSF_gauss2D(σ)
+σ=Float32(1.3*zoom)
+psf=BAMF.PSF_gauss2D(σ)
 #airy
 pixelsize=.05
 nₐ=1.4
 λ=.6
 ν=Float32(2π*nₐ/λ)*pixelsize/zoom
-psf=BAMF.PSF_airy2D(ν)
+# psf=BAMF.PSF_airy2D(ν)
 
 ## create the true state of a dataset 
-
 sz=Int32(16*zoom)
 sigma=1.3f0*zoom
 x=sz/2f0*ones(Float32,n)+ps*zoom*randn(Float32,n)
@@ -61,7 +60,7 @@ xystd=sigma/5;
 istd=10;
 split_std=sigma/2
 bndpixels=0
-myRJ=BAMF.RJStructDD(sz,psf,xystd,istd,split_std,noisyroi,bndpixels,prior_photons)
+myRJ=BAMF.RJStruct(sz,psf,xystd,istd,split_std,noisyroi,bndpixels,prior_photons)
 
 ## setup the RJMCMC.jl model
 #Jumptypes are: move, bg, add, remove, split, merge
@@ -70,7 +69,7 @@ jumpprobability=[1,0,.1,.1,.1,.1] #Move only
 jumpprobability=jumpprobability/sum(jumpprobability)
 
 # create an RJMCMC structure with all model info
-iterations=1000
+iterations=5000
 burnin=1
 acceptfuns=[BAMF.accept_move,BAMF.accept_bg,BAMF.accept_add,BAMF.accept_remove,BAMF.accept_split,BAMF.accept_merge] #array of functions
 propfuns=[BAMF.propose_move,BAMF.propose_bg,BAMF.propose_add,BAMF.propose_remove,BAMF.propose_split,BAMF.propose_merge] #array of functions

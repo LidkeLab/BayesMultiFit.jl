@@ -19,7 +19,7 @@ bg=0f0
 pointsource=BAMF.StateFlatBg(n,x,y,photons,bg)
 
 ## 2D Gaussian PSF
-σ=Float32(3*zoom)
+σ=Float32(1.3)
 psf=BAMF.PSF_gauss2D(σ)
 gausspsf=BAMF.ArrayDD(sz)
 BAMF.genmodel!(pointsource,sz,psf,gausspsf)

@@ -1,9 +1,10 @@
-## This file contains type defintions and constructors
+## Generic types and methods
 
 using CUDA
 abstract type PSF end
 abstract type BAMFState end
 abstract type BAMFData end
+
 
 ## StateFlatBg-------------
 abstract type StateFlatBg <: BAMFState end
@@ -95,26 +96,6 @@ end
 
 ## ------------------
 
-
-## ArrayDD----------
-abstract type ArrayDD <: BAMFData end
-mutable struct ArrayDD_CUDA <: ArrayDD  # direct detection data 
-    sz::Int32
-    data::CuArray{Float32,2}
-end
-mutable struct ArrayDD_CPU <: ArrayDD  # direct detection data 
-    sz::Int32
-    data::Array{Float32,2}
-end
-ArrayDD_CUDA(sz) = ArrayDD(sz, CuArray{Float32}(undef, sz, sz))
-ArrayDD(sz) = ArrayDD_CPU(sz, Array{Float32}(undef, sz, sz))
-function deepcopy(a::ArrayDD_CPU)
-    b=ArrayDD(a.sz)
-    for nn=1:b.sz*b.sz
-        b.data[nn]=a.data[nn]
-    end
-end
-
 ## ------------------
 
 
@@ -150,8 +131,8 @@ end
 
 
 
-## RJStructDD ------------
-mutable struct RJStructDD # contains data and all static info for Direct Detection passed to BAMF functions 
+## RJStruct ------------
+mutable struct RJStruct # contains data and all static info for Direct Detection passed to BAMF functions 
     sz::Int32
     psf::PSF
     xy_std::Float32
@@ -161,10 +142,18 @@ mutable struct RJStructDD # contains data and all static info for Direct Detecti
     bndpixels::Int32
     prior_photons::RJPrior
 end
-RJStructDD(sz,psf,xy_std,I_std,split_std) = RJStructDD(sz, psf, xy_std, I_std, split_std,ArrayDD(sz),Int32(2),RJPrior())
-RJStructDD(sz,psf,xy_std,I_std,split_std,data::ArrayDD) = RJStructDD(sz, psf, xy_std, I_std, split_std,data,Int32(2),RJPrior())
+RJStruct(sz,psf,xy_std,I_std,split_std) = RJStruct(sz, psf, xy_std, I_std, split_std,ArrayDD(sz),Int32(2),RJPrior())
+RJStruct(sz,psf,xy_std,I_std,split_std,data::BAMFData) = RJStruct(sz, psf, xy_std, I_std, split_std,data,Int32(2),RJPrior())
 
 ## ------------------------------
+
+"generate an empty BAMFData stucture for data type in RJStruct"
+function genBAMFData(rjs::RJStruct)
+    return genBAMFData(rjs.data)
+end
+
+
+
 
 
 

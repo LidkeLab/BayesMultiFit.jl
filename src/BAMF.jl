@@ -5,64 +5,44 @@ using ImageView
 using Distributions 
 using CUDA
 
-## Data types
-#using Revise
-
 include("bamftypes.jl")
 include("helpers.jl")
 include("gauss2D.jl")
 include("airy2D.jl")
 include("propose.jl")
 include("accept.jl")
+include("directdetection.jl")
+include("sliver.jl")
 include("display.jl")
 
 
 
-# ---------------------
+# ## likelihoodratio --------------
+# function likelihoodratio(m::ArrayDD, mtest::ArrayDD, d::Array{Float32,2})
+#     LLR = 0;
+#     for ii = 1:m.sz * m.sz
+#         LLR += m.data[ii] - mtest.data[ii] + d.data[ii] * log(mtest.data[ii] / m.data[ii]);   
+#     end
+#     L = exp(LLR)
+#     if L < 0
+#         println(L, LLR)
+#     end
+#     return exp(LLR)
+# end
 
-function calcintialstate(rjs::RJStructDD) # find initial state for direct detection data 
-    d = rjs.data.data
-    state1 = StateFlatBg()
-    state1.n = 1
-    state1.bg = minimum(d)
-    roimax = maximum(d)
-    coords = findall(x -> x == roimax, d)
-    state1.y[1] = coords[1].I[1]
-    state1.x[1] = coords[1].I[2]
-    state1.photons[1] = (roimax - state1.bg) * max2int(rjs.psf) 
-    return state1
-end
+# function likelihoodratio(sz::Int32, m::Array{Float32,2}, mtest::Array{Float32,2}, d::Array{Float32,2})
+#     LLR = 0;
+#     for ii = 1:sz * sz
+#         LLR += m[ii] - mtest[ii] + d[ii] * log(mtest[ii] / m[ii]);   
+#     end
+#     L = exp(LLR)
+#     if L < 0
+#         println(L, LLR)
+#     end
+#     return exp(LLR)
+# end
 
 
-
-## likelihoodratio --------------
-function likelihoodratio(m::ArrayDD, mtest::ArrayDD, d::Array{Float32,2})
-    LLR = 0;
-    for ii = 1:m.sz * m.sz
-        LLR += m.data[ii] - mtest.data[ii] + d.data[ii] * log(mtest.data[ii] / m.data[ii]);   
-    end
-    L = exp(LLR)
-    if L < 0
-        println(L, LLR)
-    end
-    return exp(LLR)
-end
-
-function likelihoodratio(sz::Int32, m::Array{Float32,2}, mtest::Array{Float32,2}, d::Array{Float32,2})
-    LLR = 0;
-    for ii = 1:sz * sz
-        LLR += m[ii] - mtest[ii] + d[ii] * log(mtest[ii] / m[ii]);   
-    end
-    L = exp(LLR)
-    if L < 0
-        println(L, LLR)
-    end
-    return exp(LLR)
-end
-
-function likelihoodratio(m::ArrayDD, mtest::ArrayDD, d::ArrayDD)
-     return likelihoodratio(m.sz,m.data,mtest.data,d.data)
-end
 
 function likelihoodratio(sz,m::CuArray{Float32,2}, mtest::CuArray{Float32,2}, d::CuArray{Float32,2})
     LLR=CUDA.zeros(1)

@@ -1,7 +1,9 @@
 ## Model Generators for 2D Gaussian PSFs
 
-genmodel!(m::StateFlatBg,RJStructDD,model::ArrayDD) =
-    genmodel!(m, RJStructDD.sz, RJStructDD.psf, model)
+include("../src/directdetection.jl")
+
+genmodel!(m::StateFlatBg,rjs,model::ArrayDD) =
+    genmodel!(m, rjs.sz, rjs.psf, model)
     
 struct PSF_gauss2D <: PSF
     σ::Float32

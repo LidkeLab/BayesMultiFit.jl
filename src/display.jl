@@ -86,21 +86,26 @@ function histogram2D(states::Vector{Any}, sz::Int32, zoom::Int32, truestate::Sta
 end
 
 #"Show model and data vs chain step"
-function showoverlay(states::Vector{Any},rjs::RJStructDD)
+function showoverlay(states::Vector{Any},rjs::RJStruct)
     len=length(states)
+    tmp=genBAMFData(rjs)
     sz=rjs.data.sz
-    d=Array{Float32}(undef,(sz,sz,len))
-    m=Array{Float32}(undef,(sz,sz,len))
-    tmp=ArrayDD(sz)
+    d=Array{Float32}(undef,(sz,sz*size(tmp.data,3),len))
+    m=Array{Float32}(undef,(sz,sz*size(tmp.data,3),len))
+    println(size(d))
+    dataim=reshape(rjs.data.data,(rjs.sz,rjs.sz*size(rjs.data.data,3)))
+
+    println(states[1])
     for nn=1:len
-        d[:,:,nn]=rjs.data.data     
-        model=genmodel!(states[nn],rjs,tmp)
-        m[:,:,nn]=tmp.data
+        d[:,:,nn]=dataim     
+        genmodel!(states[nn],rjs,tmp)
+        m[:,:,nn]=reshape(tmp.data,(rjs.sz,rjs.sz*size(rjs.data.data,3)))
     end
+
     globmax=maximum((maximum(m),maximum(d)))
     d=d./globmax
     m=m./globmax
-    out=cat(dims=2,d,m,d-m)
+    out=cat(dims=1,d,m,d-m)
     println(size(out))
     imshow(out)
 end
