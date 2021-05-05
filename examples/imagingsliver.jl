@@ -60,26 +60,28 @@ data.invy=sz/2f0*ones(Float32,2)
 BAMF.genmodel!(datastate,sz,psf,data)
 sum(data.data)
 sum(datastate.photons)
-# imshow(data.data)
+
+## Profiling and Timing
+# @time BAMF.genmodel!(datastate,sz,psf,data)
+# using ProfileView
+# ProfileView.@profview BAMF.genmodel!(datastate,sz,psf,data) # run once to trigger compilation (ignore this one)
+# ProfileView.@profview BAMF.genmodel!(datastate,sz,psf,data)
 
 # make data noisy 
 BAMF.poissrnd!(data.data)
+# imshow(data.data)
+
 
 ## create a BAMF-type RJMCMC structure
-
 xystd=σ/20
 istd=10f0
 split_std=σ/2
 bndpixels=0f0
 myRJ=BAMF.RJStruct(sz,psf,xystd,istd,split_std,data,bndpixels,prior_photons)
-
 data2=BAMF.genBAMFData(myRJ)
-# BAMF.genmodel!(datastate,myRJ,data2)
-# BAMF.genmodel!(datastate,myRJ.sz,myRJ.psf,data2)
-# imshow(data2.data)
 
 ## setup the RJMCMC.jl model
-#Jumptypes are: move, bg, add, remove, split, merge
+# Jumptypes are: move, bg, add, remove, split, merge
 njumptypes=6
 jumpprobability=[1,0,.1,.1,.1,.1] #Move only
 jumpprobability=jumpprobability/sum(jumpprobability)

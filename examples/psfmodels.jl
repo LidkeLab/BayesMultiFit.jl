@@ -27,7 +27,7 @@ imshow(gausspsf.data)
 println(("integrated value: " ,sum(gausspsf.data)))
 
 ## 2D Airy PSF 
-pixelsize=.1
+pixelsize=.05
 nₐ=1.4
 λ=.6
 ν=Float32(2π*nₐ/λ)*pixelsize
