@@ -1,5 +1,4 @@
 ## Defines types and methods for the SLIVER imaging method
-include("../src/airy2D.jl")
 
 "n: number of data states
 sz: square size of image in pixels

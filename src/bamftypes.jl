@@ -23,10 +23,26 @@ mutable struct StateFlatBg_CPU <: StateFlatBg # this gets saved in chain
     photons::Vector{Float32}
     bg::Float32
 end
+
+mutable struct StateFlatBg_Results <: StateFlatBg # this gets saved in chain
+    n::Int32
+    x::Vector{Float32}
+    y::Vector{Float32}
+    photons::Vector{Float32}
+    σ_x::Vector{Float32}
+    σ_y::Vector{Float32}
+    σ_photons::Vector{Float32}
+    bg::Float32
+end
+
+
 StateFlatBg() = StateFlatBg_CPU(0, [0], [0], [0], 0)
 StateFlatBg(n::Int32) = StateFlatBg_CPU(n, Vector{Float32}(undef,n),Vector{Float32}(undef,n), Vector{Float32}(undef,n), 0)
 StateFlatBg(n::Int32, x::Vector{Float32},y::Vector{Float32}, photons::Vector{Float32},bg::Float32)=StateFlatBg_CPU(n, x,y,photons, bg)
 StateFlatBg_CUDA(n::Int32) = StateFlatBg_CPU(n, CuArray{Float32}(undef,n), CuArray{Float32}(undef,n), CuArray{Float32}(undef,n), 0)
+StateFlatBg_Results(n::Int32) = StateFlatBg_Results(n, Vector{Float32}(undef,n),
+    Vector{Float32}(undef,n), Vector{Float32}(undef,n),Vector{Float32}(undef,n),Vector{Float32}(undef,n), Vector{Float32}(undef,n), 0)
+
 
 function StateFlatBg_CUDACopy!(myempty,myfull)
     idx=threadIdx().x

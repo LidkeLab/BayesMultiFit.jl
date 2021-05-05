@@ -30,10 +30,6 @@ function genmodel_airy2D!(s::StateFlatBg, sz::Int32, psf::PSF_airy2D, model::Arr
 end
 
 
-function genmodel!(m::StateFlatBg, sz::Int32, psf::PSF_airy2D, model::ArrayDD)
-    genmodel_airy2D!(m, sz, psf, model.data)
-end
-
 function max2int(psf::PSF_airy2D)
     return 4π/psf.ν^2
 end

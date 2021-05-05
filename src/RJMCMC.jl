@@ -2,9 +2,6 @@ module RJMCMC
 
 using Plots
 
-include("BAMF.jl")
-using .BAMF
-
 mutable struct RJMCMCStruct
     burnin::Int32
     iterations::Int32

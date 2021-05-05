@@ -5,6 +5,7 @@ using ImageView
 using Distributions 
 using CUDA
 
+include("RJMCMC.jl")
 include("bamftypes.jl")
 include("helpers.jl")
 include("gauss2D.jl")
@@ -13,35 +14,8 @@ include("propose.jl")
 include("accept.jl")
 include("directdetection.jl")
 include("sliver.jl")
+include("analysis.jl")
 include("display.jl")
-
-
-
-# ## likelihoodratio --------------
-# function likelihoodratio(m::ArrayDD, mtest::ArrayDD, d::Array{Float32,2})
-#     LLR = 0;
-#     for ii = 1:m.sz * m.sz
-#         LLR += m.data[ii] - mtest.data[ii] + d.data[ii] * log(mtest.data[ii] / m.data[ii]);   
-#     end
-#     L = exp(LLR)
-#     if L < 0
-#         println(L, LLR)
-#     end
-#     return exp(LLR)
-# end
-
-# function likelihoodratio(sz::Int32, m::Array{Float32,2}, mtest::Array{Float32,2}, d::Array{Float32,2})
-#     LLR = 0;
-#     for ii = 1:sz * sz
-#         LLR += m[ii] - mtest[ii] + d[ii] * log(mtest[ii] / m[ii]);   
-#     end
-#     L = exp(LLR)
-#     if L < 0
-#         println(L, LLR)
-#     end
-#     return exp(LLR)
-# end
-
 
 
 function likelihoodratio(sz,m::CuArray{Float32,2}, mtest::CuArray{Float32,2}, d::CuArray{Float32,2})
@@ -60,11 +34,6 @@ function likelihoodratio_CUDA!(sz::Int32,m, mtest, d,LLR)
     CUDA.atomic_add!(pointer(LLR,1), llr)
     return nothing
 end
-
-## ---------------------
-
-
-
 
 
 end

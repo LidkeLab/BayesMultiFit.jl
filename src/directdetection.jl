@@ -20,6 +20,10 @@ function deepcopy(a::ArrayDD_CPU)
     end
 end
 
+function genmodel!(m::StateFlatBg,rjs,model::ArrayDD)
+    genmodel!(m, rjs.sz, rjs.psf, model.data)
+end
+
 function likelihoodratio(m::ArrayDD, mtest::ArrayDD, d::ArrayDD)
     return likelihoodratio(m.data,mtest.data,d.data)
 end

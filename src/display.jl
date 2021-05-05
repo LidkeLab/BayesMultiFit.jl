@@ -6,49 +6,7 @@ function circleShape(h, k, r)
 end
 
 
-function getxy(states::Vector{Any})
-    # count number of emitters 
-    nemitters = 0;
-    for nn = 1:length(states) 
-        nemitters += states[nn].n
-    end
-    
-    x = Vector{Float32}(undef, nemitters)
-    y = Vector{Float32}(undef, nemitters)
- 
-    cnt = 0;
-    for ss = 1:length(states) 
-        for nn = 1:states[ss].n
-            cnt += 1  
-            x[cnt] = states[ss].x[nn]
-            y[cnt] = states[ss].y[nn]
-        end
-    end   
-    return x,y 
-end
 
-function getn(states::Vector{Any})
-    maxemitters = 0
-    nstates=length(states) 
-
-    traj_n=Vector{Int32}((undef),nstates)
-    for nn = 1:nstates
-        traj_n[nn]=states[nn].n
-        maxemitters=max(maxemitters,states[nn].n)
-    end
-
-    posterior_n=zeros(Float32, maxemitters+1) 
-    for nn = 1:nstates
-        posterior_n[states[nn].n+1]+=states[nn].n
-    end
-    posterior_n=posterior_n/sum(posterior_n)
-
-    cntmax = maximum(posterior_n)
-    coords = findall(x -> x == cntmax, posterior_n)
-    map_n=coords[1]-1
-
-    return map_n,posterior_n,traj_n
-end
 
 function histogram2D(states::Vector{Any}, sz::Int32, zoom::Int32)
     x,y=getxy(states)
@@ -114,16 +72,30 @@ function plotstate(truestate::StateFlatBg,foundstate::StateFlatBg)
     fig=plot()
     dcircle = 0.5
     for nn = 1:truestate.n
-        plot!(fig, circleShape(truestate.x[nn], truestate.y[nn], dcircle), color=:blue)  
+        plot!(fig, circleShape(truestate.x[nn], truestate.y[nn], dcircle), color=:blue,yflip=true)  
     end
 
     for nn = 1:foundstate.n
-        plot!(fig, circleShape(foundstate.x[nn], foundstate.y[nn], dcircle), color=:red)  
+        plot!(fig, circleShape(foundstate.x[nn], foundstate.y[nn], dcircle), color=:red,yflip=true)  
     end
     
     return fig
 end
 
+function plotstate(truestate::StateFlatBg,foundstate::StateFlatBg_Results)
+    fig=plot()
+    dcircle = 0.5
+    for nn = 1:truestate.n
+        plot!(fig, circleShape(truestate.x[nn], truestate.y[nn], dcircle), color=:blue,yflip=true)  
+    end
+
+    for nn = 1:foundstate.n
+        σ=(foundstate.σ_x[nn]+foundstate.σ_x[nn])/2f0
+        plot!(fig, circleShape(foundstate.x[nn], foundstate.y[nn], σ), color=:red,yflip=true)  
+    end
+    
+    return fig
+end
 
 
 

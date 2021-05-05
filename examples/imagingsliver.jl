@@ -1,7 +1,8 @@
 ## An example of emitter estimation from a combined direct detection and SLIVER measurement
 
-include("../src/RJMCMC.jl")
+# include("../src/RJMCMC.jl")
 include("../src/BAMF.jl")
+import BAMF: RJMCMC
 using ImageView
 using Plots
 ImageView.closeall()
@@ -9,6 +10,8 @@ ImageView.closeall()
 # simulation config
 n=Int32(5)  #number of emitters
 μ=1000      #mean photons per emitter               
+iterations=1000
+burnin=1000
 
 # telescope parameters
 f=2.0f0
@@ -33,7 +36,7 @@ data=BAMF.DataSLIVER(sz,type)
 
 # setup prior distribution on intensity
 using Distributions
-α=Float32(2)
+α=Float32(4)
 θ=Float32(μ/α)
 g=Gamma(α,θ)
 len=Int32(1024)
@@ -58,17 +61,15 @@ data.invy=sz/2f0*ones(Float32,2)
 
 # generate the data 
 BAMF.genmodel!(datastate,sz,psf,data)
-sum(data.data)
-sum(datastate.photons)
 
 ## Profiling and Timing
-# @time BAMF.genmodel!(datastate,sz,psf,data)
+#  @time BAMF.genmodel!(datastate,sz,psf,data)
 # using ProfileView
 # ProfileView.@profview BAMF.genmodel!(datastate,sz,psf,data) # run once to trigger compilation (ignore this one)
 # ProfileView.@profview BAMF.genmodel!(datastate,sz,psf,data)
 
 # make data noisy 
-BAMF.poissrnd!(data.data)
+# BAMF.poissrnd!(data.data)
 # imshow(data.data)
 
 
@@ -76,9 +77,8 @@ BAMF.poissrnd!(data.data)
 xystd=σ/20
 istd=10f0
 split_std=σ/2
-bndpixels=0f0
+bndpixels=-20f0
 myRJ=BAMF.RJStruct(sz,psf,xystd,istd,split_std,data,bndpixels,prior_photons)
-data2=BAMF.genBAMFData(myRJ)
 
 ## setup the RJMCMC.jl model
 # Jumptypes are: move, bg, add, remove, split, merge
@@ -87,8 +87,6 @@ jumpprobability=[1,0,.1,.1,.1,.1] #Move only
 jumpprobability=jumpprobability/sum(jumpprobability)
 
 # create an RJMCMC structure with all model info
-iterations=500
-burnin=10
 acceptfuns=[BAMF.accept_move,BAMF.accept_bg,BAMF.accept_add,BAMF.accept_remove,BAMF.accept_split,BAMF.accept_merge] #array of functions
 propfuns=[BAMF.propose_move,BAMF.propose_bg,BAMF.propose_add,BAMF.propose_remove,BAMF.propose_split,BAMF.propose_merge] #array of functions
 myRJMCMC=RJMCMC.RJMCMCStruct(burnin,iterations,njumptypes,jumpprobability,propfuns,acceptfuns)
@@ -100,29 +98,34 @@ state1=BAMF.calcintialstate(myRJ)
 @time mychain=RJMCMC.buildchain(myRJMCMC,myRJ,state1)
 
 ## Profiling
-using ProfileView
-ProfileView.@profview  mychain=RJMCMC.buildchain(myRJMCMC,myRJ,state1) # run once to trigger compilation (ignore this one)
-ProfileView.@profview mychain=RJMCMC.buildchain(myRJMCMC,myRJ,state1)
+# using ProfileView
+# ProfileView.@profview  mychain=RJMCMC.buildchain(myRJMCMC,myRJ,state1) # run once to trigger compilation (ignore this one)
+# ProfileView.@profview mychain=RJMCMC.buildchain(myRJMCMC,myRJ,state1)
 
 ## Display
+# accepts,pl2=RJMCMC.showacceptratio(mychain)
+
 zm=Int32(1)
-jts=mychain.jumptypes
 plotly()
-# BAMF.histogram2D(mychain.states,sz,zm,data,datastate)
 plt=BAMF.histogram2D(mychain.states,sz,zm,datastate)
 display(plt)
 
 map_n,posterior_n,traj_n=BAMF.getn(mychain.states)
-plot(traj_n)
+plt2=plot(traj_n)
+display(plt2)
+# BAMF.showoverlay(mychain.states,myRJ)
 
-# println(map_n)
-# println(posterior_n)
-sum(mychain.states[end].photons)
-sum(datastate.photons)
-BAMF.showoverlay(mychain.states,myRJ)
-accepts,pl2=RJMCMC.showacceptratio(mychain)
-# plotly()
-# BAMF.plotstate(datastate,mychain.states[end])
+
+## MAPN Results
+states_mapn,n=BAMF.getmapnstates(mychain.states)
+plt=BAMF.histogram2D(states_mapn,sz,zm,datastate)
+display(plt)
+
+Results_mapn=BAMF.getmapn(mychain.states)
+BAMF.plotstate(datastate,Results_mapn)
+
+
+
 
 
 

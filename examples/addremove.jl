@@ -38,7 +38,7 @@ pixelsize=.05
 nₐ=1.4
 λ=.6
 ν=Float32(2π*nₐ/λ)*pixelsize/zoom
-# psf=BAMF.PSF_airy2D(ν)
+ psf=BAMF.PSF_airy2D(ν)
 
 ## create the true state of a dataset 
 sz=Int32(16*zoom)
@@ -101,5 +101,6 @@ accepts,pl2=RJMCMC.showacceptratio(mychain)
 
 plotly()
 BAMF.plotstate(datastate,mychain.states[end])
+
 
 

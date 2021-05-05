@@ -1,15 +1,12 @@
 ## Model Generators for 2D Gaussian PSFs
 
-include("../src/directdetection.jl")
 
-genmodel!(m::StateFlatBg,rjs,model::ArrayDD) =
-    genmodel!(m, rjs.sz, rjs.psf, model)
     
 struct PSF_gauss2D <: PSF
     σ::Float32
 end
 
-function genmodel_gauss2D!(s::StateFlatBg, sz::Int32, psf::PSF_gauss2D, model::Array{Float32,2})
+function genmodel!(s::StateFlatBg, sz::Int32, psf::PSF_gauss2D, model::Array{Float32,2})
     for ii = 1:sz
         for jj = 1:sz
             model[ii,jj] = s.bg
@@ -38,14 +35,7 @@ function genmodel_gauss2D_CUDA!(s_n::Int32,s_x, s_y,
      return nothing
 end
 
-
-
-function genmodel!(m::StateFlatBg, sz::Int32, psf::PSF_gauss2D, model::ArrayDD)
-    genmodel_gauss2D!(m, sz, psf, model.data)
-end
-
-
-function genmodel_gauss2D!(s::StateFlatBg, sz::Int32, psf::PSF_gauss2D, model::CuArray{Float32,2}) 
+function genmodel!(s::StateFlatBg, sz::Int32, psf::PSF_gauss2D, model::CuArray{Float32,2}) 
     @cuda threads=sz blocks=sz genmodel_gauss2D_CUDA!(s.n,s.x,s.y,s.photons,s.bg, sz, psf.σ, model)
 end
 
