@@ -223,6 +223,12 @@ git-tree-sha1 = "3ebb967819b284dc1e3c0422229b58a40a255649"
 uuid = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 version = "0.26.3"
 
+[[DocumenterTools]]
+deps = ["Base64", "DocStringExtensions", "Documenter", "FileWatching", "LibGit2", "Sass"]
+git-tree-sha1 = "fd313c343451ff8f88ff711662ea13f9629b9a58"
+uuid = "35a29f4d-8980-5a13-9543-d66fff28ecb8"
+version = "0.1.10"
+
 [[Downloads]]
 deps = ["ArgTools", "LibCURL", "NetworkOptions"]
 uuid = "f43a241f-c20a-4ad4-852c-f6b1247861c6"
@@ -1015,6 +1021,12 @@ version = "0.2.0"
 [[SHA]]
 uuid = "ea8e919c-243c-51af-8825-aaa63cd721ce"
 
+[[Sass]]
+deps = ["libsass_jll"]
+git-tree-sha1 = "aa841c3738cec78b5dbccd56dda332710f35f6a5"
+uuid = "322a6be2-4ae8-5d68-aaf1-3e960788d1d9"
+version = "0.2.0"
+
 [[Scratch]]
 deps = ["Dates"]
 git-tree-sha1 = "ad4b278adb62d185bbcb6864dc24959ab0627bf6"
@@ -1393,6 +1405,12 @@ deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg", "Zlib_jll"]
 git-tree-sha1 = "6abbc424248097d69c0c87ba50fcb0753f93e0ee"
 uuid = "b53b4c65-9356-5827-b1ea-8c7a1a84506f"
 version = "1.6.37+6"
+
+[[libsass_jll]]
+deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
+git-tree-sha1 = "663428b7ebaf60c60ee147f0f9466430e9959ad6"
+uuid = "47bcb7c8-5119-555a-9eeb-0afcc36cd728"
+version = "3.5.5+0"
 
 [[libvorbis_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Ogg_jll", "Pkg"]
