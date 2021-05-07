@@ -1,13 +1,43 @@
 ## Generic types and methods
 
 using CUDA
+
+
+"""
+    PSF
+
+PSF is an abstract type.  Specific psf types will inherit from PSF
+"""
 abstract type PSF end
+
+
+"""
+    BAMFState
+
+BAMFState is an abstract type.  Specific state types will inherit from BAMFState.  
+States hold the current state of the RJMCMC Chain (i.e. θ) and can also be used to
+define a true underlying state that generated the data. 
+"""
 abstract type BAMFState end
+
+
+"""
+    BAMFData
+
+BAMFData is an abstract type.  Specific data types will inherit from BAMFData.  
+The most common example is 'directdetection'  
+"""
 abstract type BAMFData end
 
 
-## StateFlatBg-------------
+
+"""
+    StateFlatBg<: BAMFState
+
+StateFlatBg is an abstract type with childern that implement CPU and GPU variants 
+"""    
 abstract type StateFlatBg <: BAMFState end
+
 
 mutable struct StateFlatBg_CUDA <: StateFlatBg # this gets saved in chain
     n::Int32
@@ -16,6 +46,12 @@ mutable struct StateFlatBg_CUDA <: StateFlatBg # this gets saved in chain
     photons::CuArray{Float32}
     bg::Float32
 end
+
+"""
+    StateFlatBg_CPU(n::Int32, x::Vector{Float32}, y::Vector{Float32}, photons::Vector{Float32}, bg::Float32)
+
+State of a model that has x,y positions, total integrated intensity and a flat background offset. 
+"""
 mutable struct StateFlatBg_CPU <: StateFlatBg # this gets saved in chain
     n::Int32
     x::Vector{Float32}
@@ -135,7 +171,11 @@ function priorrnd(rjp::RJPrior)
     return Float32((nn-1)*rjp.θ_step+rjp.θ_start)
 end
 
-"Calculate PDF(θ)"
+""""
+    priorpdf(rjp::RJPrior,θ)   
+
+Calculate PDF(θ)
+"""
 function priorpdf(rjp::RJPrior,θ)
 nn=round((θ-rjp.θ_start)/rjp.θ_step)
 nn=Int32(max(1,min(nn,rjp.sz)))
@@ -143,11 +183,12 @@ return rjp.pdf[nn]
 end
 
 
-## ------------------------
+"""
+    RJStruct
 
-
-
-## RJStruct ------------
+RJStruct holds the data to be analyzed, the priors, the PSF model, 
+and the parameters used in the RJMCMC steps. 
+"""
 mutable struct RJStruct # contains data and all static info for Direct Detection passed to BAMF functions 
     sz::Int32
     psf::PSF
@@ -161,9 +202,13 @@ end
 RJStruct(sz,psf,xy_std,I_std,split_std) = RJStruct(sz, psf, xy_std, I_std, split_std,ArrayDD(sz),Int32(2),RJPrior())
 RJStruct(sz,psf,xy_std,I_std,split_std,data::BAMFData) = RJStruct(sz, psf, xy_std, I_std, split_std,data,Int32(2),RJPrior())
 
-## ------------------------------
 
-"generate an empty BAMFData stucture for data type in RJStruct"
+
+"""
+    genBAMFData(rjs::RJStruct)
+
+generate an empty BAMFData stucture for data type in RJStruct
+"""
 function genBAMFData(rjs::RJStruct)
     return genBAMFData(rjs.data)
 end

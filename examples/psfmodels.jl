@@ -1,11 +1,11 @@
+## Show the calculation of Gaussian and Airy PSF models
 
-using Plots
-include("../src/RJMCMC.jl")
 include("../src/BAMF.jl")
-using .RJMCMC
-using .BAMF
+import BAMF: RJMCMC
 using ImageView
+using Plots
 ImageView.closeall()
+
 
 ## Setup
 sz=Int32(32)
@@ -22,7 +22,7 @@ pointsource=BAMF.StateFlatBg(n,x,y,photons,bg)
 σ=Float32(1.3)
 psf=BAMF.PSF_gauss2D(σ)
 gausspsf=BAMF.ArrayDD(sz)
-BAMF.genmodel!(pointsource,sz,psf,gausspsf)
+BAMF.genmodel!(pointsource,psf,gausspsf)
 imshow(gausspsf.data)
 println(("integrated value: " ,sum(gausspsf.data)))
 
@@ -33,7 +33,7 @@ nₐ=1.4
 ν=Float32(2π*nₐ/λ)*pixelsize
 psf=BAMF.PSF_airy2D(ν)
 airypsf=BAMF.ArrayDD(sz)
-BAMF.genmodel!(pointsource,sz,psf,airypsf)
+BAMF.genmodel!(pointsource,psf,airypsf)
 imshow(airypsf.data)
 println(("integrated value: " ,sum(airypsf.data)))
 

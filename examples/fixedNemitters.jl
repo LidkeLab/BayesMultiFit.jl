@@ -1,5 +1,7 @@
 ## Demonstrates use of BAMF on a single region with fixed Number of emitters
 
+# !this example may be broken
+
 using Revise
 using Plots
 println(pwd())

@@ -1,6 +1,10 @@
 ## This implements data types and methods for direct detection imaging (i.e. standard array imaging at image plane)
 
+"""
+    ArrayDD <: BAMFData
 
+data type for direct detection (i.e. a single image at a camera).   
+"""
 abstract type ArrayDD <: BAMFData end
 
 mutable struct ArrayDD_CUDA <: ArrayDD  # direct detection data 
@@ -20,9 +24,14 @@ function deepcopy(a::ArrayDD_CPU)
     end
 end
 
-function genmodel!(m::StateFlatBg,rjs,model::ArrayDD)
-    genmodel!(m, rjs.sz, rjs.psf, model.data)
+function genmodel!(m::StateFlatBg,rjs::RJStruct,model::ArrayDD)
+    genmodel!(m, model.sz, rjs.psf, model.data)
 end
+
+function genmodel!(m::StateFlatBg,psf::PSF,model::ArrayDD)
+    genmodel!(m, model.sz, psf, model.data)
+end
+
 
 function likelihoodratio(m::ArrayDD, mtest::ArrayDD, d::ArrayDD)
     return likelihoodratio(m.data,mtest.data,d.data)

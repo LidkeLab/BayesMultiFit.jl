@@ -1,12 +1,12 @@
 ## Defines types and methods for the SLIVER imaging method
 
-"n: number of data states
-sz: square size of image in pixels
-type: 1 for DD, 2 for SLIVER
-data: array of data of size sz*sz*n where is n_{DD} +2 n_{SLIVER}
-invx: inversion point in x. (n x 1) vector. Ignored for DD
-invy: inversion point in y. (n x 1) vector. Ignored for DD       
-"
+# "n: number of data states
+# sz: square size of image in pixels
+# type: 1 for DD, 2 for SLIVER
+# data: array of data of size sz*sz*n where is n_{DD} +2 n_{SLIVER}
+# invx: inversion point in x. (n x 1) vector. Ignored for DD
+# invy: inversion point in y. (n x 1) vector. Ignored for DD       
+# "
 mutable struct DataSLIVER <: BAMFData  # SLIVER Data structure
     n::Int32 
     sz::Int32
@@ -27,7 +27,7 @@ function DataSLIVER(sz::Int32, type::Vector{Int32})
     return DataSLIVER(n, sz, type, inttime, data, invx, invy)
 end
 
-"create a copy of DataSLIVER type with empty data"
+# "create a copy of DataSLIVER type with empty data"
 function genBAMFData(data::DataSLIVER)
     n = length(data.type)
     nimages = sum(data.type)
@@ -95,7 +95,7 @@ function likelihoodratio(m::DataSLIVER, mtest::DataSLIVER, d::DataSLIVER)
     return likelihoodratio(m.data, mtest.data, d.data)
 end
 
-"sliver uses only the direct detection images for residuum and returns a ArrayDD type"
+# "sliver uses only the direct detection images for residuum and returns a ArrayDD type"
 function calcresiduum(model::DataSLIVER, data::DataSLIVER) 
     residuum = ArrayDD(model.sz)
     for nn = 1:prod(size(residuum.data))

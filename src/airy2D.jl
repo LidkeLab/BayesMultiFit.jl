@@ -2,9 +2,15 @@
 
 using SpecialFunctions
 
-"Airy PSF is ν²/(4π)(2*J1(ν*r)/(ν*r))²
-where ν=πD/(λf)=2*π*nₐ/λ
-Note that the Gaussian approximation is σ = 0.42*π/ν "    
+"""
+    PSF_airy2D <: PSF
+
+Airy PSF is ν²/(4π)(2*J₁(ν*r)/(ν*r))²  
+where  
+ν=πD/(λf)=2*π*nₐ/λ  
+
+Note that the Gaussian approximation is σ = 0.42*π/ν
+"""
 struct PSF_airy2D <: PSF
     ν::Float32
 end
@@ -17,7 +23,7 @@ function airy_amplitude(r::Float32,ν::Float32)
 end
 
 
-function genmodel_airy2D!(s::StateFlatBg, sz::Int32, psf::PSF_airy2D, model::Array{Float32,2})
+function genmodel!(s::StateFlatBg, sz::Int32, psf::PSF_airy2D, model::Array{Float32,2})
     for ii = 1:sz
         for jj = 1:sz
             model[ii,jj] = s.bg

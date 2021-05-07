@@ -1,10 +1,18 @@
 ## Helper functions
-"return random number between 1 and k"
+"""
+    randID(k::Int32)  
+
+return random number between 1 and k
+"""
 function randID(k::Int32)
     return Int32(ceil(k * rand()))
 end
 
-"Generic Likelihood calculation using Poisson noise statistics"
+"""
+    likelihoodratio(m::Array{Float32}, mtest::Array{Float32}, d::Array{Float32})  
+
+Generic Likelihood calculation using Poisson noise statistics
+"""
 function likelihoodratio(m::Array{Float32}, mtest::Array{Float32}, d::Array{Float32})
     nelem=prod(size(m))
     minmodel=1f-6 #to avoid division by zero and log of zero
@@ -19,7 +27,10 @@ function likelihoodratio(m::Array{Float32}, mtest::Array{Float32}, d::Array{Floa
     return exp(LLR)
 end
 
-"In place Poisson noise corruptor"
+""""
+    poissrnd!(d::Array{Float32})
+In-place Poisson noise corruptor
+"""
 function poissrnd!(d::Array{Float32})
     nelem=prod(size(d))
     for nn = 1:nelem
@@ -27,7 +38,7 @@ function poissrnd!(d::Array{Float32})
     end
 end
 
-"An inexpensive Normal random number generator for CUDA"
+# "An inexpensive Normal random number generator for CUDA"
 function curandn()
     r=0;
     for ii=1:12
@@ -36,7 +47,12 @@ function curandn()
     return r-6f0
 end
 
-"Intial guess for 1 source given data."
+"""
+    calcintialstate(rjs::RJStruct)  
+
+calculates an intial state by finding the maximum of the data and places an emitter
+at that location with an intensity selected from the prior.  
+"""
 function calcintialstate(rjs::RJStruct) # find initial state for direct detection data 
     d = rjs.data.data
     state1 = StateFlatBg()
