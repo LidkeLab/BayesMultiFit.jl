@@ -2,6 +2,27 @@ module RJMCMC
 
 using Plots
 
+"""
+    RJMCMCStruct
+
+Contains information about creating the chain
+
+# Fields
+- `burnin::Int32`: number of steps for chain burn in.
+- `iterations::Int32' : number of steps for the returned chain
+- `njumptypes::Int32' : number of different jump types
+- `jumpprobability::Vector{Float32}' : probability mass function for jump type selection
+- `proposalfuns' :  array of functions for proposal functions
+- `acceptfuns' :  array of functions for acceptance functions
+
+proposal and acceptance functions must have the signature
+
+    (proposedstate,vararg)=proposalfuns[jt](mhs,currentstate)     
+    α=acceptfuns[jt](mhs,currentstate,proposedstate,vararg)
+
+where jt is the index of the jumptype, mhs is structure passed to the functions, and vararg is anything needed to be passed
+between related propose and accept fucntions 
+"""
 mutable struct RJMCMCStruct
     burnin::Int32
     iterations::Int32
@@ -11,6 +32,19 @@ mutable struct RJMCMCStruct
     acceptfuns
 end
 
+"""
+    RJChain
+
+Contains information about the chain including a vector of accepted states
+
+# Fields
+- `n::Int32 : number of jumps in chain 
+- `states::Vector{Any} : vector of states 
+- `jumptypes::Vector{Int32} : vector of the attempted jumptype from the current state
+- `α::Vector{Float32} : vector of acceptance probabilities from proposed state 
+- `accept::Vector{Bool} : vector of results from acceptance calculation
+
+"""
 mutable struct RJChain  #this is the main output of RJMCMC
     n::Int32  #number of jumps in chain 
     states::Vector{Any}

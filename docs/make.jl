@@ -1,7 +1,11 @@
-using Documenter, BAMF 
+push!(LOAD_PATH,"../src/")
 
-makedocs(sitename="My Documentation",
-modules=[BAMF]
+using Documenter, BAMF, BAMF.RJMCMC 
+import BAMF: RJMCMC
+
+makedocs(sitename="BAMF.jl Documentation",
+modules=[BAMF,RJMCMC]
+
 )
 
 deploydocs(;

@@ -6,7 +6,7 @@ using CUDA
 """
     PSF
 
-PSF is an abstract type.  Specific psf types will inherit from PSF
+Abstract type.  Specific psf types will inherit from PSF
 """
 abstract type PSF end
 
@@ -14,7 +14,8 @@ abstract type PSF end
 """
     BAMFState
 
-BAMFState is an abstract type.  Specific state types will inherit from BAMFState.  
+Abstract type.  Specific state types will inherit from BAMFState.  
+
 States hold the current state of the RJMCMC Chain (i.e. θ) and can also be used to
 define a true underlying state that generated the data. 
 """
@@ -25,6 +26,7 @@ abstract type BAMFState end
     BAMFData
 
 BAMFData is an abstract type.  Specific data types will inherit from BAMFData.  
+
 The most common example is 'directdetection'  
 """
 abstract type BAMFData end
@@ -34,7 +36,7 @@ abstract type BAMFData end
 """
     StateFlatBg<: BAMFState
 
-StateFlatBg is an abstract type with childern that implement CPU and GPU variants 
+Abstract type with childern that implement CPU and GPU variants 
 """    
 abstract type StateFlatBg <: BAMFState end
 
@@ -174,7 +176,7 @@ end
 """"
     priorpdf(rjp::RJPrior,θ)   
 
-Calculate PDF(θ)
+calculate PDF(θ)
 """
 function priorpdf(rjp::RJPrior,θ)
 nn=round((θ-rjp.θ_start)/rjp.θ_step)
@@ -186,8 +188,7 @@ end
 """
     RJStruct
 
-RJStruct holds the data to be analyzed, the priors, the PSF model, 
-and the parameters used in the RJMCMC steps. 
+Holds the data to be analyzed, the priors, the PSF model, and parameters used in the RJMCMC steps. 
 """
 mutable struct RJStruct # contains data and all static info for Direct Detection passed to BAMF functions 
     sz::Int32

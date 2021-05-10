@@ -1,4 +1,4 @@
-# BAMF.jl Documentation
+# BAMF Documentation
 
 This repository is currently serving as a vehicle to explore the Julia Language environment using a somewhat sophisticated code base. It implements the core Reversible Jump Markov Chain Monte Carlo (RJMCMC) algorithm from the paper:
 

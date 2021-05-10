@@ -5,11 +5,18 @@ using SpecialFunctions
 """
     PSF_airy2D <: PSF
 
-Airy PSF is ν²/(4π)(2*J₁(ν*r)/(ν*r))²  
-where  
+Contains the parameter used to calculate an Airy Pattern PSF
+
+The Airy PSF is  
+
+I(r)=ν²/(4π)(2*J₁(ν*r)/(ν*r))²    
+
+where     
+
 ν=πD/(λf)=2*π*nₐ/λ  
 
-Note that the Gaussian approximation is σ = 0.42*π/ν
+!!! note
+    The Gaussian approximation is σ = 0.42*π/ν
 """
 struct PSF_airy2D <: PSF
     ν::Float32
