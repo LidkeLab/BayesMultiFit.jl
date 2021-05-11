@@ -1,4 +1,4 @@
-push!(LOAD_PATH,"../src/")
+# push!(LOAD_PATH,"../src/")
 
 using Documenter, BAMF, BAMF.RJMCMC 
 import BAMF: RJMCMC
