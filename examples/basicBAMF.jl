@@ -1,11 +1,13 @@
 ## This shows the simplest use of BAMF with a Gaussian PSF
 
-include("../src/BAMF.jl")
-import BAMF: RJMCMC
+include("../src/BayesMultiFit.jl")
+BAMF=BayesMultiFit
+using ReversibleJumpMCMC
+const RJMCMC = ReversibleJumpMCMC
 using ImageView
 using Plots
 using Distributions
-ImageView.closeall()
+#ImageView.closeall()
 
 ## simulation config
 n=Int32(6)      # number of emitters

@@ -1,11 +1,12 @@
 ## An example of emitter estimation from a combined direct detection and SLIVER measurement
 
-# include("../src/RJMCMC.jl")
-include("../src/BAMF.jl")
-import BAMF: RJMCMC
+include("../src/BayesMultiFit.jl")
+BAMF=BayesMultiFit
+using ReversibleJumpMCMC
+const RJMCMC = ReversibleJumpMCMC
 using ImageView
 using Plots
-ImageView.closeall()
+#ImageView.closeall()
 
 # simulation config
 n=Int32(5)  #number of emitters

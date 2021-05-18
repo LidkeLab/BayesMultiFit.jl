@@ -1,11 +1,11 @@
-module BAMF
+module BayesMultiFit
 
 using Plots
 using ImageView
 using Distributions 
 using CUDA
+using ReversibleJumpMCMC
 
-include("RJMCMC.jl")
 include("bamftypes.jl")
 include("helpers.jl")
 include("gauss2D.jl")

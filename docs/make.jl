@@ -1,13 +1,11 @@
 # push!(LOAD_PATH,"../src/")
 
-using Documenter, BAMF, BAMF.RJMCMC 
-import BAMF: RJMCMC
+using Documenter, BayesMultiFit
 
-makedocs(sitename="BAMF.jl Documentation",
-modules=[BAMF,RJMCMC]
-
+makedocs(sitename="BayesMultiFit.jl Documentation",
+modules=[BayesMultiFit]
 )
 
 deploydocs(;
-    repo="github.com/LidkeLab/BAMF.jl.git"
+    repo="github.com/LidkeLab/BayesMultiFit.jl.git"
 )
