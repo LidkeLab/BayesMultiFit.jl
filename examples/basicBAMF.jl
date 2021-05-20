@@ -90,4 +90,6 @@ Results_mapn=BAMF.getmapn(mychain.states)
 BAMF.plotstate(datastate,Results_mapn)
 
 
+## Teting the matlab interface
 
+out=BAMF.matlab_DD_FlatBG(data.data,collect("gauss"),1.3f0,θ_start,θ_step,len,mypdf,Int32(burnin),Int32(iterations),xystd,istd,split_std,bndpixels)
