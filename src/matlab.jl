@@ -2,6 +2,13 @@
 
 using MATLAB
 
+
+function mextest(args::Vector{MATLAB.MxArray})
+
+    return [MATLAB.jvalue(arg) for arg in args]
+end
+
+
 function matlab_DD_FlatBG_mex(args::Vector{MATLAB.MxArray})
     
     roi=MATLAB.jvalue(args[1])
