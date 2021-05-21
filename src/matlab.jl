@@ -23,7 +23,7 @@ function matlab_DD_FlatBG_mex(args::Vector{MATLAB.MxArray})
     # burnin,iterations,
     # xystd, istd,split_std,bndpixels)
 
-    return roi
+    return [roi]
 end
 
 function matlab_DD_FlatBG(roi::Array{Float32},psftype::Vector{Char},σ_psf::Float32,
