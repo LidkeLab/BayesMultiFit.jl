@@ -1,6 +1,6 @@
-using BAMF
+using BayesMultiFit
 using Test
 
-@testset "BAMF.jl" begin
+@testset "BayesMultiFit.jl" begin
     # Write your tests here.
 end
