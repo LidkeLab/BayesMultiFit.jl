@@ -731,6 +731,12 @@ git-tree-sha1 = "9e3377afc44de61ae2abeaee4fa3a971f9a5c0bc"
 uuid = "6f1432cf-f94c-5a45-995e-cdbf5db27b0b"
 version = "2.0.0"
 
+[[MATLAB]]
+deps = ["Libdl", "SparseArrays"]
+git-tree-sha1 = "9edb97bacd74c960b27d6fd230e139689fdc4a7b"
+uuid = "10e44e05-a98a-55b3-a45b-ba969058deb6"
+version = "0.8.2"
+
 [[MKL_jll]]
 deps = ["Artifacts", "IntelOpenMP_jll", "JLLWrappers", "LazyArtifacts", "Libdl", "Pkg"]
 git-tree-sha1 = "c253236b0ed414624b083e6b72bfe891fbd2c7af"
