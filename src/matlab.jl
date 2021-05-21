@@ -3,26 +3,27 @@
 using MATLAB
 
 function matlab_DD_FlatBG_mex(args::Vector{MATLAB.MxArray})
-    roi=MATLAB.jvalue(1)
-    psftype=MATLAB.jvalue(2)
-    σ_psf=MATLAB.jvalue(3)
-    θ_start=MATLAB.jvalue(4)
-    θ_step=MATLAB.jvalue(5)
-    len=MATLAB.jvalue(6)
-    pdfvec=MATLAB.jvalue(7)
-    burnin=MATLAB.jvalue(8)
-    iterations=MATLAB.jvalue(9)
-    xystd=MATLAB.jvalue(10)
-    istd=MATLAB.jvalue(11)
-    split_std=MATLAB.jvalue(12)
-    bndpixels=MATLAB.jvalue(13)
+    
+    roi=MATLAB.jvalue(args[1])
+    # psftype=MATLAB.jvalue(2)
+    # σ_psf=MATLAB.jvalue(3)
+    # θ_start=MATLAB.jvalue(4)
+    # θ_step=MATLAB.jvalue(5)
+    # len=MATLAB.jvalue(6)
+    # pdfvec=MATLAB.jvalue(7)
+    # burnin=MATLAB.jvalue(8)
+    # iterations=MATLAB.jvalue(9)
+    # xystd=MATLAB.jvalue(10)
+    # istd=MATLAB.jvalue(11)
+    # split_std=MATLAB.jvalue(12)
+    # bndpixels=MATLAB.jvalue(13)
     
     # mapn=matlab_DD_FlatBG(roi,psftype,σ_psf,
     # θ_start,θ_step,len,pdfvec,
     # burnin,iterations,
     # xystd, istd,split_std,bndpixels)
 
-    return pdfvec
+    return roi
 end
 
 function matlab_DD_FlatBG(roi::Array{Float32},psftype::Vector{Char},σ_psf::Float32,
