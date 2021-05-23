@@ -6,13 +6,14 @@ using ReversibleJumpMCMC
 const RJMCMC = ReversibleJumpMCMC
 using ImageView
 using Plots
+using MATLAB
 #ImageView.closeall()
 
 # simulation config
 n=Int32(5)  #number of emitters
 μ=1000      #mean photons per emitter               
 iterations=1000
-burnin=1000
+burnin=1
 
 # telescope parameters
 f=2.0f0
@@ -20,8 +21,9 @@ D=0.1f0
 λ=1f-6 
 
 # detector parameters
-pixelsize=1f-6
-sz=Int32(128)
+zoom=1f0
+pixelsize=1f-6*zoom
+sz=Int32(128/zoom)
 
 # setup the psf 
 ν=π*D/(λ*f)*pixelsize
@@ -106,7 +108,7 @@ state1=BAMF.calcintialstate(myRJ)
 ## Display
 # accepts,pl2=RJMCMC.showacceptratio(mychain)
 
-zm=Int32(1)
+zm=Int32(zoom)
 plotly()
 plt=BAMF.histogram2D(mychain.states,sz,zm,datastate)
 display(plt)
@@ -121,11 +123,28 @@ display(plt2)
 states_mapn,n=BAMF.getmapnstates(mychain.states)
 plt=BAMF.histogram2D(states_mapn,sz,zm,datastate)
 display(plt)
-
 Results_mapn=BAMF.getmapn(mychain.states)
 BAMF.plotstate(datastate,Results_mapn)
 
 
+## Teting the matlab interface
+
+#=
+out=BAMF.matlab_SLIVER_FlatBG(data.data,data.type,data.invx,data.invy,"airy",ν,θ_start,θ_step,len,mypdf,Int32(burnin),Int32(iterations),xystd,istd,split_std,bndpixels)
+
+# mex interface
+
+args=[MATLAB.mxarray(data.data),MATLAB.mxarray(data.type),MATLAB.mxarray(data.invx),MATLAB.mxarray(data.invy),
+MATLAB.mxarray("airy"),MATLAB.mxarray(ν),MATLAB.mxarray(θ_start),MATLAB.mxarray(θ_step),
+MATLAB.mxarray(len),MATLAB.mxarray(mypdf),MATLAB.mxarray(Int32(burnin)),MATLAB.mxarray(Int32(iterations)),
+MATLAB.mxarray(xystd),MATLAB.mxarray(istd),MATLAB.mxarray(split_std),MATLAB.mxarray(bndpixels)
+]
+
+BAMF.mextypes(args)
+BAMF.mextest(args)
+
+mapn=BAMF.matlab_SLIVER_FlatBG_mex(args)
+=#
 
 
 
