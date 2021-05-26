@@ -22,8 +22,8 @@ D=0.1f0
 
 # detector parameters
 zoom=1f0
-pixelsize=1f-6*zoom
-sz=Int32(128/zoom)
+pixelsize=4f-6*zoom
+sz=Int32(32/zoom)
 
 # setup the psf 
 ν=π*D/(λ*f)*pixelsize

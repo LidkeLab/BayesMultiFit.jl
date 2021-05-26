@@ -34,7 +34,7 @@ end
 function airy_amplitude(r::Float32,ν::Float32)
     w=r*ν
     w=max(w,1f-5)
-    return (4π)^-(1/2) * ν * (2*mybesselj1(w)/w)
+    return (4π)^-(1/2) * ν * (2*besselj1(w)/w)
 end
 
 
