@@ -12,8 +12,8 @@ using MATLAB
 # simulation config
 n=Int32(5)  #number of emitters
 μ=1000      #mean photons per emitter               
-iterations=1000
-burnin=1
+iterations=5000
+burnin=5000
 
 # telescope parameters
 f=2.0f0
@@ -52,8 +52,8 @@ display(plt)
 prior_photons=BAMF.RJPrior(len,θ_start,θ_step,mypdf)
 
 # set emitter positions and intensity
-x=sz/2f0*ones(Float32,n)+σ*randn(Float32,n)
-y=sz/2f0*ones(Float32,n)+ σ*randn(Float32,n)
+x=sz/2f0*ones(Float32,n)+2*σ*randn(Float32,n)
+y=sz/2f0*ones(Float32,n)+ 2*σ*randn(Float32,n)
 photons=Float32.(rand(g,n))
 bg=1f-6
 datastate=BAMF.StateFlatBg(n,x,y,photons,bg)
@@ -66,6 +66,8 @@ data.invy=sz/2f0*ones(Float32,2)
 BAMF.genmodel!(datastate,sz,psf,data)
 
 ## Profiling and Timing
+#  using BenchmarkTools
+#  @benchmark BAMF.genmodel!(datastate,sz,psf,data)
 #  @time BAMF.genmodel!(datastate,sz,psf,data)
 # using ProfileView
 # ProfileView.@profview BAMF.genmodel!(datastate,sz,psf,data) # run once to trigger compilation (ignore this one)
@@ -77,7 +79,7 @@ BAMF.poissrnd!(data.data)
 
 
 ## create a BAMF-type RJMCMC structure
-xystd=σ/20
+xystd=σ/10
 istd=10f0
 split_std=σ/2
 bndpixels=-20f0
@@ -86,7 +88,7 @@ myRJ=BAMF.RJStruct(sz,psf,xystd,istd,split_std,data,bndpixels,prior_photons)
 ## setup the RJMCMC.jl model
 # Jumptypes are: move, bg, add, remove, split, merge
 njumptypes=6
-jumpprobability=[1,0,.1,.1,.1,.1] #Move only
+jumpprobability=[1,0,.1,.1,.1,.1] 
 jumpprobability=jumpprobability/sum(jumpprobability)
 
 # create an RJMCMC structure with all model info
@@ -98,7 +100,10 @@ myRJMCMC=RJMCMC.RJMCMCStruct(burnin,iterations,njumptypes,jumpprobability,propfu
 state1=BAMF.calcintialstate(myRJ)
 
 ## run chain
-@time mychain=RJMCMC.buildchain(myRJMCMC,myRJ,state1)
+@time mychain=RJMCMC.buildchain(myRJMCMC,myRJ,state1);
+# @time mychain=RJMCMC.buildchain(myRJMCMC,myRJ,datastate)
+
+
 
 ## Profiling
 # using ProfileView
@@ -117,7 +122,6 @@ map_n,posterior_n,traj_n=BAMF.getn(mychain.states)
 plt2=plot(traj_n)
 display(plt2)
 # BAMF.showoverlay(mychain.states,myRJ)
-
 
 ## MAPN Results
 states_mapn,n=BAMF.getmapnstates(mychain.states)
