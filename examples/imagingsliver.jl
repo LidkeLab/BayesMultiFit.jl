@@ -33,8 +33,14 @@ psf=BAMF.PSF_airy2D(ν)
 # create an empty dataset structure
 # ?BAMF.DataSLIVER 
 
-# type=Int32[1] #DD then SLIVER
-type=Int32[1,2] #DD then SLIVER
+nmeas=1
+if nmeas==1
+    type=Int32[1] #DD
+end
+if nmeas==2
+    type=Int32[1,2] #DD then SLIVER
+end
+
 data=BAMF.DataSLIVER(sz,type)
 
 # setup prior distribution on intensity
@@ -59,8 +65,8 @@ bg=1f-6
 datastate=BAMF.StateFlatBg(n,x,y,photons,bg)
 
 # set inversion points
-data.invx=sz/2f0*ones(Float32,2)
-data.invy=sz/2f0*ones(Float32,2)
+data.invx=sz/2f0*ones(Float32,nmeas)
+data.invy=sz/2f0*ones(Float32,nmeas)
 
 # generate the data 
 BAMF.genmodel!(datastate,sz,psf,data)
