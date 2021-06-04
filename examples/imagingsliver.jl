@@ -12,8 +12,8 @@ using MATLAB
 # simulation config
 n=Int32(5)  #number of emitters
 μ=1000      #mean photons per emitter               
-iterations=5000
-burnin=5000
+iterations=1000
+burnin=1000
 
 # telescope parameters
 f=2.0f0
@@ -122,6 +122,8 @@ map_n,posterior_n,traj_n=BAMF.getn(mychain.states)
 plt2=plot(traj_n)
 display(plt2)
 # BAMF.showoverlay(mychain.states,myRJ)
+postimage=BAMF.getposterior(mychain.states,sz,Int32(4))
+heatmap(postimage)
 
 ## MAPN Results
 states_mapn,n=BAMF.getmapnstates(mychain.states)
@@ -131,9 +133,9 @@ Results_mapn=BAMF.getmapn(mychain.states)
 BAMF.plotstate(datastate,Results_mapn)
 
 
-## Teting the matlab interface
+## Testing the matlab interface
 
-#=
+
 out=BAMF.matlab_SLIVER_FlatBG(data.data,data.type,data.invx,data.invy,"airy",ν,θ_start,θ_step,len,mypdf,Int32(burnin),Int32(iterations),xystd,istd,split_std,bndpixels)
 
 # mex interface
@@ -148,7 +150,7 @@ BAMF.mextypes(args)
 BAMF.mextest(args)
 
 mapn=BAMF.matlab_SLIVER_FlatBG_mex(args)
-=#
+
 
 
 

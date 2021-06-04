@@ -3,10 +3,11 @@
 using MATLAB
 using Printf
 
+global matlab_chain
+
 function mextest(args::Vector{MATLAB.MxArray})
     return [MATLAB.jvalue(arg) for arg in args]
 end
-
 
 function mextypes(args::Vector{MATLAB.MxArray})
     return [@sprintf("%s",typeof(MATLAB.jvalue(arg))) for arg in args]
@@ -91,17 +92,18 @@ function matlab_DD_FlatBG(roi::Array{Float32,2},psftype::String,σ_psf::Float32,
     jumpprobability = jumpprobability / sum(jumpprobability)
     njumptypes = Int32(length(jumpprobability))
 
-# create an RJMCMC structure with all model info
+    # create an RJMCMC structure with all model info
     acceptfuns = [accept_move,accept_bg,accept_add,accept_remove,accept_split,accept_merge] # array of functions
     propfuns = [propose_move,propose_bg,propose_add,propose_remove,propose_split,propose_merge] # array of functions
     myRJMCMC = ReversibleJumpMCMC.RJMCMCStruct(burnin, iterations, njumptypes, jumpprobability, propfuns, acceptfuns)
 
-# create an intial state
+    # create an intial state
     state1 = calcintialstate(myRJ)
 
-## run chain. This is the call to the main algorithm
-    mychain = ReversibleJumpMCMC.buildchain(myRJMCMC, myRJ, state1)
-    Results_mapn = getmapn(mychain.states)
+    ## run chain. This is the call to the main algorithm
+    global matlab_chain
+    matlab_chain = ReversibleJumpMCMC.buildchain(myRJMCMC, myRJ, state1)
+    Results_mapn = getmapn(matlab_chain.states)
     return Results_mapn
 end
 
@@ -176,8 +178,9 @@ function matlab_SLIVER_FlatBG(roi::Array{Float32,3},meastype::Vector{Int32},invx
     state1 = calcintialstate(myRJ)
 
 ## run chain. This is the call to the main algorithm
-    mychain = ReversibleJumpMCMC.buildchain(myRJMCMC, myRJ, state1)
-    Results_mapn = getmapn(mychain.states)
+    global matlab_chain
+    matlab_chain = ReversibleJumpMCMC.buildchain(myRJMCMC, myRJ, state1)
+    Results_mapn = getmapn(matlab_chain.states)
     return Results_mapn
 end
 

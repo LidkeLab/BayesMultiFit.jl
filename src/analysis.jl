@@ -2,6 +2,7 @@
 
 using Clustering
 using Statistics
+using StatsBase
 
 """
 x,y,photons=getxy(states::Vector{Any})
@@ -78,7 +79,7 @@ function getmapnstates(states::Vector{Any})
 end
 
 """
-clusterstates(states::Vector{Any},n::Int32)
+    clusterstates(states::Vector{Any},n::Int32)
 
 uses kmeans clustering group x,y locations into n clusters
 and returns a State_Results structure. 
@@ -114,6 +115,24 @@ function getmapn(states::Vector{Any})
     return clusterstates(mapnstates,n)
 end
 
+"""
+    getposterior(states::Vector{Any}, sz::Int32, zoom::Int32)
 
+Get a 2D posterior probability image of source locations
+
+# Arguments
+- `states::Vector{Any}`: Array of states found by RJMCMC`
+- `sz::Int32' : Linear size of analyzed ROI (pixels)
+- `zoom::Int32' : Pixel subsampling
+
+
+"""
+function getposterior(states::Vector{Any}, sz::Int32, zoom::Int32)
+    x,y=getxy(states)
+    xbins = range(0.5, sz+0.5;step=1 / zoom)
+    ybins = range(0.5, sz+0.5;step=1 / zoom)
+    h = fit(Histogram,(x,y),(xbins,ybins))
+    return h.weights
+end
 
 
