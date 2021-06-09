@@ -89,9 +89,18 @@ function propose_split(rjs::RJStruct, currentstate::BAMFState)
     
     # println("split")
 
+    if currentstate.n<1
+        println("attempting to split 0 sources")
+    end
+
     teststate = StateFlatBg(currentstate)
     # get an emitter
     idx = randID(currentstate.n)
+
+    if idx==0
+        return teststate,(idx,teststate.n,0f0,0f0,0f0)
+
+    end
 
     # these are conserved 
     photons_total = teststate.photons[idx]
@@ -116,6 +125,7 @@ function propose_split(rjs::RJStruct, currentstate::BAMFState)
     addemitter!(teststate, x_new, y_new, photons_new)
 
     return teststate,(idx,teststate.n,u1,u2,u3)
+
 end
 
 

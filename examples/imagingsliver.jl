@@ -33,7 +33,7 @@ psf=BAMF.PSF_airy2D(ν)
 # create an empty dataset structure
 # ?BAMF.DataSLIVER 
 
-nmeas=1
+nmeas=2
 if nmeas==1
     type=Int32[1] #DD
 end
