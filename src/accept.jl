@@ -56,6 +56,10 @@ function accept_split(rjs::RJStruct, currentstate::BAMFState, teststate::BAMFSta
 
     idx1,idx2,u1,u2,u3=vararg
 
+    if idx1==0
+        return 0
+    end
+    
     roi = genBAMFData(rjs)
     roitest = genBAMFData(rjs)
     genmodel!(currentstate, rjs, roi)

@@ -48,12 +48,22 @@ function curandn()
 end
 
 """
-    calcintialstate(rjs::RJStruct)  
+    calcintialstate(rjs::RJStruct, seed::Int32)  
 
 calculates an intial state by finding the maximum of the data and places an emitter
-at that location with an intensity selected from the prior.  
+at that location with an intensity selected from the prior. 
+
+allows the input of an optional non-negative, integer random seed that generates from 
+the Mersenne Twister library to produce deterministic initial states. If no integer is input, 
+the function uses the OS provided entropy.
+
 """
-function calcintialstate(rjs::RJStruct) # find initial state for direct detection data 
+function calcintialstate(rjs::RJStruct, seed::Int32=-1) # find initial state for direct detection data 
+    if seed == -1
+        Random.seed!();
+    else
+        Random.seed!(seed);
+    end
     d = rjs.data.data
     state1 = StateFlatBg()
     state1.n = 1

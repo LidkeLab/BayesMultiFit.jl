@@ -21,7 +21,7 @@ function matlab_DD_FlatBG_mex_lite(args::Vector{MATLAB.MxArray})
     θ_start = MATLAB.jvalue(args[4])
     θ_step = MATLAB.jvalue(args[5])
     len = MATLAB.jvalue(args[6])
-    pdfvec = ones(Float32,len)./len
+    pdfvec = ones(Float32, len) ./ len
     burnin = Int32(100)
     iterations = Int32(1000)
     xystd = Float32(.1)
@@ -57,14 +57,14 @@ function matlab_DD_FlatBG_mex(args::Vector{MATLAB.MxArray})
     # return [length(MATLAB.jvalue(arg)) for arg in args]
 
     e = 0
-    mapn=0
+    mapn = 0
     try
         mapn = matlab_DD_FlatBG(roi,psftype,σ_psf,
     θ_start,θ_step,len,pdfvec,
     burnin,iterations,
     xystd, istd,split_std,bndpixels)
     catch e
-        return [@sprintf("%s",e)]
+       return [@sprintf("%s",e)]
     end
     return [mapn.x,mapn.y,mapn.photons,mapn.σ_x,mapn.σ_y,mapn.σ_photons]
 end
@@ -108,10 +108,20 @@ function matlab_DD_FlatBG(roi::Array{Float32,2},psftype::String,σ_psf::Float32,
 end
 
 function matlab_SLIVER_FlatBG_mex(args::Vector{MATLAB.MxArray})
-    roi = MATLAB.jvalue(args[1])
-    meastype=MATLAB.jvalue(args[2])
-    invx=MATLAB.jvalue(args[3])
-    invy=MATLAB.jvalue(args[4])
+    
+    n = length(MATLAB.jvalue(args[3]))
+    if n == 1 #force back to vectors
+        roi = reshape(MATLAB.jvalue(args[1]),Val(3))
+        meastype = [MATLAB.jvalue(args[2])]
+        invx = [MATLAB.jvalue(args[3])]
+        invy = [MATLAB.jvalue(args[4])]
+    else
+        roi = MATLAB.jvalue(args[1])
+        meastype = MATLAB.jvalue(args[2])
+        invx = MATLAB.jvalue(args[3])
+        invy = MATLAB.jvalue(args[4])
+    end
+
     psftype = MATLAB.jvalue(args[5])
     σ_psf = MATLAB.jvalue(args[6])
     θ_start = MATLAB.jvalue(args[7])
@@ -128,15 +138,15 @@ function matlab_SLIVER_FlatBG_mex(args::Vector{MATLAB.MxArray})
     # return [length(MATLAB.jvalue(arg)) for arg in args]
 
     e = 0
-    mapn=0
-    try
+    mapn = 0
+    #try
         mapn = matlab_SLIVER_FlatBG(roi,meastype,invx,invy,psftype,σ_psf,
     θ_start,θ_step,len,pdfvec,
     burnin,iterations,
     xystd, istd,split_std,bndpixels)
-    catch e
-        return [@sprintf("%s",e)]
-    end
+    #catch e
+    #    return [@sprintf("%s",e)]
+    #end
     return [mapn.x,mapn.y,mapn.photons,mapn.σ_x,mapn.σ_y,mapn.σ_photons]
 end
 
@@ -158,10 +168,10 @@ function matlab_SLIVER_FlatBG(roi::Array{Float32,3},meastype::Vector{Int32},invx
     end
 
     prior_photons = RJPrior(len, θ_start, θ_step, pdfvec)    
-    data=DataSLIVER(sz,meastype)
-    data.data=roi
-    data.invx=invx
-    data.invy=invy
+    data = DataSLIVER(sz, meastype)
+    data.data = roi
+    data.invx = invx
+    data.invy = invy
 
 
     myRJ = RJStruct(sz, psf, xystd, istd, split_std, data, bndpixels, prior_photons)
