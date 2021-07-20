@@ -5,6 +5,7 @@ using ImageView
 using Distributions 
 using CUDA
 using ReversibleJumpMCMC
+using Random
 
 include("bamftypes.jl")
 include("helpers.jl")
