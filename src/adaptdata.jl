@@ -24,6 +24,28 @@ function DDMeasType(info::Tuple, inttime::Float32)
 end
 
 #=
+SLIVERMeasType describes the information necessary to create a SLIVER measurement. That would be the
+integration time, the xy coordinates of the inversion point, and the number of images a SLIVER 
+measurement creates
+=#
+
+struct SLIVERMeasType <: MeasType
+    images::Int32
+    inttime::Float32
+    invx::Float32
+    invy::Float32
+end
+
+function SLIVERMeasType(inttime::Float32, invx::Float32, invy::Float32)
+    return SLIVERMeasType(Int32(2), inttime, invx, invy)
+end
+
+function SLIVERMeasType(info::Tuple, inttime::Float32)
+    invx, invy = info
+    return SLIVERMeasType(inttime, invx, invy)
+end
+
+#=
 genMeasType generates a MeasType object of the appropriate type for the inputs
 =#
 
@@ -106,6 +128,20 @@ function genimage(s::BAMFState, sz::Int32, psf::PSF, meas::DDMeasType)
     for n_emit in 1:s.n, ii in 1:sz, jj in 1:sz
         r = sqrt((jj - s.x[n_emit])^2 + (ii - s.y[n_emit])^2)
         image[ii, jj, 1] += s.photons[n_emit]*meas.inttime*(spread(psf, r)^2)
+    end
+    return image
+end
+
+function genimage(s::BAMFState, sz::Int32, psf::PSF, meas::SLIVERMeasType)
+    image = zeros(Float32, sz, sz, 2)
+    cntr = Int32(ceil((sz + 1) / 2)) 
+    for n_emit in 1:s.n, ii in 1:sz, jj in 1:sz
+        r1 = sqrt((s.y[n_emit] - meas.invy - ii + cntr)^2 + (s.x[n_emit] - meas.invx - jj + cntr)^2)
+        a1 = sqrt(1 / 2f0 * meas.inttime * s.photons[n_emit]) * spread(psf, r1)
+        r2 = sqrt((-s.y[n_emit] + meas.invy - ii + cntr)^2 + (-s.x[n_emit] + meas.invx - jj + cntr)^2)
+        a2 = sqrt(1 / 2f0 * meas.inttime * s.photons[n_emit]) * spread(psf, r2)
+        image[ii, jj, 1] += 0.5f0*abs(a1 + a2)^2
+        image[ii, jj, 2] += 0.5f0*abs(a1 - a2)^2
     end
     return image
 end

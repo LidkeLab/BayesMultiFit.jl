@@ -75,10 +75,6 @@ genBAMFDD(T::Type{BAMF.BAMFData}, sz::Int32) generates an empty BAMFData direct 
 type T and size sz. The default size is 32.
 =#
 
-function genBAMFDD(T::Type{BAMF.BAMFData}, sz::Int32=Int32(32))
-    return genBAMFDD(T, sz)
-end
-
 function genBAMFDD(T::Type{BAMF.ArrayDD}, sz::Int32=Int32(32))
     return BAMF.ArrayDD(sz)
 end
@@ -107,12 +103,12 @@ genBAMFSLIVER(T::Type{BAMF.BAMFData}, sz::Int32) returns an empty BAMFData SLIVE
 size sz. The default size is 32.
 =#
 
-function genBAMFSLIVER(T::Type{BAMF.BAMFData}, sz::Int32=Int32(32))
-    return genBAMFSLIVER(T, sz)
-end
-
 function genBAMFSLIVER(T::Type{BAMF.DataSLIVER}, sz::Int32=Int32(32))
     return BAMF.DataSLIVER(sz, [Int32(2)])
+end
+
+function genBAMFSLIVER(T::Type{BAMF.AdaptData}, sz::Int32=Int32(32))
+    return BAMF.AdaptData(sz, [(BAMF.SLIVERMeasType, (Float32(0f0), Float32(0f0)))])
 end
 
 #=
@@ -125,6 +121,13 @@ function SLIVERinfo(SLIVER::BAMF.DataSLIVER)
     dim= size(SLIVER.data)
     sz= SLIVER.sz
     inttime, invx, invy= SLIVER.inttime[1], SLIVER.invx[1], SLIVER.invy[1]
+    return sz, dim, inttime, invx, invy, SLIVER
+end
+
+function SLIVERinfo(SLIVER::BAMF.AdaptData)
+    dim= size(SLIVER.data)
+    sz= SLIVER.sz
+    inttime, invx, invy= SLIVER.meastypes[1].inttime, SLIVER.meastypes[1].invx, SLIVER.meastypes[1].invy
     return sz, dim, inttime, invx, invy, SLIVER
 end
 
@@ -210,7 +213,7 @@ BAMF.poissrnd!(data.data)
     end
     
     # test blank BAMFData object generation for SLIVER type data for all applicable BAMFData types
-    SLIVERdatatypelist=[BAMF.DataSLIVER]
+    SLIVERdatatypelist=[BAMF.DataSLIVER, BAMF.AdaptData]
     for datatype in SLIVERdatatypelist
         data = genBAMFSLIVER(datatype)
         sz, dim, inttime, invx, invy, SLIVER = SLIVERinfo(data)
