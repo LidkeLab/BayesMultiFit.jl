@@ -10,6 +10,6 @@ Documentation is rudimentary and should be considered only as proof of principle
 
 
 ```@autodocs
-Modules = [BAMF]
+Modules = [BayesMultiFit]
 ```
 
