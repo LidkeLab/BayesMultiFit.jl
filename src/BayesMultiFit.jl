@@ -18,6 +18,7 @@ include("sliver.jl")
 include("analysis.jl")
 include("display.jl")
 include("matlab.jl")
+include("adaptdata.jl")
 
 
 function likelihoodratio(sz,m::CuArray{Float32,2}, mtest::CuArray{Float32,2}, d::CuArray{Float32,2})

@@ -3,6 +3,20 @@ using Test
 BAMF=BayesMultiFit
 using ReversibleJumpMCMC
 const RJMCMC = ReversibleJumpMCMC
+using Random
+using Distributions
+
+#=
+psfget returns the contents of a PSF regardless of type
+=#
+
+function psfget(psf::BAMF.PSF_airy2D)
+    return psf.ν
+end 
+
+function psfget(psf::BAMF.PSF_gauss2D)
+    return psf.σ
+end
 
 #=
 gendatastate(seed::Int32=-1, psf::PSF=PSF_airy2D(.2*pi))
@@ -13,14 +27,6 @@ Most of the generation data is similar to that of the imagingsliver example.
 
 Also takes an optional PSF, otherwise uses a PSF_airy2D with a v of .2*pi 
 =# 
-
-function psfget(psf::BAMF.PSF_airy2D)
-    return psf.ν
-end 
-
-function psfget(psf::BAMF.PSF_gauss2D)
-    return psf.σ
-end
 
 function gendatastate(seed::Int32=-1, psf::BAMF.PSF=BAMF.PSF_airy2D(.2*pi))
     if seed == -1
@@ -61,44 +67,64 @@ function gendatastate(seed::Int32=-1, psf::BAMF.PSF=BAMF.PSF_airy2D(.2*pi))
     split_std=σ/2
     bndpixels=-20f0
     
-    return datastate, psf,xystd,istd,split_std,data,bndpixels,prior_photons
+    return datastate, psf,xystd,istd,split_std,bndpixels,prior_photons
 end
 
-function genBAMFDD(T::Type{BAMF.BAMFData}, sz::Int32=32)
+#=
+genBAMFDD(T::Type{BAMF.BAMFData}, sz::Int32) generates an empty BAMFData direct detection model of 
+type T and size sz. The default size is 32.
+=#
+
+function genBAMFDD(T::Type{BAMF.BAMFData}, sz::Int32=Int32(32))
     return genBAMFDD(T, sz)
 end
 
-function genBAMFDD(T::Type{BAMF.ArrayDD}, sz::Int32)
+function genBAMFDD(T::Type{BAMF.ArrayDD}, sz::Int32=Int32(32))
     return BAMF.ArrayDD(sz)
 end
 
-function genBAMFDD(T::Type{BAMF.DataSLIVER}, sz::Int32)
-    return BAMF.DataSLIVER(sz, [1])
+function genBAMFDD(T::Type{BAMF.DataSLIVER}, sz::Int32=Int32(32))
+    return BAMF.DataSLIVER(sz, [Int32(1)])
 end
+
+#=
+DDinfo(DD::BAMF.BAMFData) returns a tuple of the information that ought to be contained in a direct
+detection BAMFData structure: size, an array of the appropriate dimensions, and the object itself.
+=#
 
 function DDinfo(DD::BAMF.BAMFData)
     dim= size(DD.data)
-    size= DD.sz
-    return size, dim, DD
+    sz= DD.sz
+    return sz, dim, DD
 end
 
-function genBAMFSLIVER(T::Type{BAMF.BAMFData}, sz::Int32=32)
+#=
+genBAMFSLIVER(T::Type{BAMF.BAMFData}, sz::Int32) returns an empty BAMFData SLIVER model of type T and
+size sz. The default size is 32.
+=#
+
+function genBAMFSLIVER(T::Type{BAMF.BAMFData}, sz::Int32=Int32(32))
     return genBAMFSLIVER(T, sz)
 end
 
-function genBAMFSLIVER(T::Type{BAMF.DataSLIVER}, sz::Int32)
-    return BAMF.DataSLIVER(sz, [2])
+function genBAMFSLIVER(T::Type{BAMF.DataSLIVER}, sz::Int32=Int32(32))
+    return BAMF.DataSLIVER(sz, [Int32(2)])
 end
+
+#=
+SLIVERinfo(SLIVER::BAMF.BAMFData) returns a tuple of the information that ought to be contained in a SLIVER
+BAMFData structure: size, an array of the appropriate dimensions, the object itself, and the x y inversion
+points alongside the integration time.
+=#
 
 function SLIVERinfo(SLIVER::BAMF.DataSLIVER)
     dim= size(SLIVER.data)
-    size= SLIVER.sz
-    nimages= SLIVER.nimages
+    sz= SLIVER.sz
     inttime, invx, invy= SLIVER.inttime[1], SLIVER.invx[1], SLIVER.invy[1]
-    return size, dim, nimages, inttime, invx, invy, SLIVER
+    return sz, dim, inttime, invx, invy, SLIVER
 end
 
-
+#=
 # Create synthetic data
 data=BAMF.ArrayDD(sz)      
 BAMF.genmodel!(datastate,psf,data)
@@ -115,15 +141,20 @@ jumpprobability=jumpprobability/sum(jumpprobability)
 acceptfuns=[BAMF.accept_move,BAMF.accept_bg,BAMF.accept_add,BAMF.accept_remove,BAMF.accept_split,BAMF.accept_merge] #array of functions
 propfuns=[BAMF.propose_move,BAMF.propose_bg,BAMF.propose_add,BAMF.propose_remove,BAMF.propose_split,BAMF.propose_merge] #array of functions
 myRJMCMC=RJMCMC.RJMCMCStruct(burnin,iterations,njumptypes,jumpprobability,propfuns,acceptfuns)
+=#
 
 @testset "BayesMultiFit.jl" begin
     # test blank BAMFData object generation for DD type data for all BAMFData types
     DDdatatypelist=[BAMF.ArrayDD, BAMF.DataSLIVER]
     for datatype in DDdatatypelist
         data= genBAMFDD(datatype)
-        sz, dim, DD=DDInfo(data)
+        sz, dim, DD=DDinfo(data)
         @test sz == 32
-        @test dim == 32, 32
+        if length(dim)==3
+            @test dim==(32, 32, 1)
+        else
+            @test dim==(32,32)
+        end
         @test isa(DD, datatype)
     end
     
@@ -131,13 +162,17 @@ myRJMCMC=RJMCMC.RJMCMCStruct(burnin,iterations,njumptypes,jumpprobability,propfu
     for datatype in DDdatatypelist
         data= genBAMFDD(datatype)
         copy= BAMF.genBAMFData(data)
-        sz, dim, DD=DDInfo(copy)
+        sz, dim, DD=DDinfo(copy)
         @test sz == 32
-        @test dim == 32, 32
+        if length(dim)==3
+            @test dim==(32, 32, 1)
+        else
+            @test dim==(32,32)
+        end
         @test isa(DD, datatype)
     end
     
-    datastate, psf,xystd,istd,split_std,data,bndpixels,prior_photons= gendatastate(Int32(1))
+    datastate, psf,xystd,istd,split_std,bndpixels,prior_photons= gendatastate(Int32(1))
     
     # test genmodel! for DD type data for all BAMFData types
     expectDD=BAMF.ArrayDD(Int32(32))
@@ -146,23 +181,30 @@ myRJMCMC=RJMCMC.RJMCMCStruct(burnin,iterations,njumptypes,jumpprobability,propfu
     for datatype in DDdatatypelist
         data=genBAMFDD(datatype)
         BAMF.genmodel!(datastate, rjsDD, data)
-        sz, dim, DD=DDInfo(data)
+        sz, dim, DD=DDinfo(data)
         @test sz == 32
-        @test dim == 32, 32
-        @test isa(DD, datatype)
-        for i in 1:32, j in 1:32
-            @test data.data[i, j] == expectDD.data[i, j]
+        if length(dim)==3
+            @test dim==(32, 32, 1)
+            for i in 1:32, j in 1:32
+                @test data.data[i, j, 1] ≈ expectDD.data[i, j] atol=1f-4
+            end
+        else
+            @test dim==(32,32)
+            for i in 1:32, j in 1:32
+                @test data.data[i, j] ≈ expectDD.data[i, j] atol=1f-4
+            end
         end
+        @test isa(DD, datatype)
+        
     end
     
     # test blank BAMFData object generation for SLIVER type data for all applicable BAMFData types
     SLIVERdatatypelist=[BAMF.DataSLIVER]
     for datatype in SLIVERdatatypelist
         data = genBAMFSLIVER(datatype)
-        sz, dim, nimages, inttime, invx, invy, SLIVER = SLIVERInfo(data)
+        sz, dim, inttime, invx, invy, SLIVER = SLIVERinfo(data)
         @test sz == 32
-        @test dim == 32, 32, 2
-        @test nimages == 2
+        @test dim == (32, 32, 2)
         @test inttime == 1
         @test invx == 0
         @test invy == 0
@@ -173,10 +215,9 @@ myRJMCMC=RJMCMC.RJMCMCStruct(burnin,iterations,njumptypes,jumpprobability,propfu
     for datatype in SLIVERdatatypelist
         data = genBAMFSLIVER(datatype)
         copy = BAMF.genBAMFData(data)
-        sz, dim, nimages, inttime, invx, invy, SLIVER = SLIVERInfo(copy)
+        sz, dim, inttime, invx, invy, SLIVER = SLIVERinfo(copy)
         @test sz == 32
-        @test dim == 32, 32, 2
-        @test nimages == 2
+        @test dim == (32, 32, 2)
         @test inttime == 1
         @test invx == 0
         @test invy == 0
@@ -184,22 +225,21 @@ myRJMCMC=RJMCMC.RJMCMCStruct(burnin,iterations,njumptypes,jumpprobability,propfu
     end
     
     # test genmodel! for SLIVER type data for all applicable BAMFData types
-    expectSLIVER=BAMF.DataSLIVER(32, [2])
-    rjsSLIVER = BAMF.RJStruct(32,psf,xystd,istd,split_std,expectSLIVER,bndpixels,prior_photons)
+    expectSLIVER=BAMF.DataSLIVER(Int32(32), [Int32(2)])
+    rjsSLIVER = BAMF.RJStruct(Int32(32),psf,xystd,istd,split_std,expectSLIVER,bndpixels,prior_photons)
     BAMF.genmodel!(datastate, rjsSLIVER, expectSLIVER)
     for datatype in SLIVERdatatypelist
         data = genBAMFSLIVER(datatype)
         BAMF.genmodel!(datastate, rjsSLIVER, data)
-        sz, dim, nimages, inttime, invx, invy, SLIVER = SLIVERInfo(data)
+        sz, dim, inttime, invx, invy, SLIVER = SLIVERinfo(data)
         @test sz == 32
-        @test dim == 32, 32, 2
-        @test nimages == 2
+        @test dim == (32, 32, 2)
         @test inttime == 1
         @test invx == 0
         @test invy == 0
         @test isa(SLIVER, datatype)
         for i in 1:32, j in 1:32, k in 1:2
-            @test data.data[i, j, k] == expectSLIVER.data[i, j, k]
+            @test data.data[i, j, k] ≈ expectSLIVER.data[i, j, k] atol=1f-4
         end 
     end
     
