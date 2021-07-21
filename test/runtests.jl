@@ -87,6 +87,10 @@ function genBAMFDD(T::Type{BAMF.DataSLIVER}, sz::Int32=Int32(32))
     return BAMF.DataSLIVER(sz, [Int32(1)])
 end
 
+function genBAMFDD(T::Type{BAMF.AdaptData}, sz::Int32=Int32(32))
+    return BAMF.AdaptData(sz, [(BAMF.DDMeasType, ())])
+end
+
 #=
 DDinfo(DD::BAMF.BAMFData) returns a tuple of the information that ought to be contained in a direct
 detection BAMFData structure: size, an array of the appropriate dimensions, and the object itself.
@@ -152,7 +156,7 @@ BAMF.poissrnd!(data.data)
 
 @testset "BayesMultiFit.jl" begin
     # test blank BAMFData object generation for DD type data for all BAMFData types
-    DDdatatypelist=[BAMF.ArrayDD, BAMF.DataSLIVER]
+    DDdatatypelist=[BAMF.ArrayDD, BAMF.DataSLIVER, BAMF.AdaptData]
     for datatype in DDdatatypelist
         data= genBAMFDD(datatype)
         sz, dim, DD=DDinfo(data)
