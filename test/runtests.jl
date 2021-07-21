@@ -125,22 +125,29 @@ function SLIVERinfo(SLIVER::BAMF.DataSLIVER)
 end
 
 #=
+genRJMCMC(burnin::Int32, iterations::Int32) is a function that produces an RJMCMCStruct with the usual DD accept 
+and propose functions alongside some standard jump probabilities. The default burnin and iterations is 1000.
+=#
+
+function genRJMCMC(burnin::Int32=Int32(1000), iterations::Int32=Int32(1000))
+    ## setup the RJMCMC.jl model
+    # Jumptypes are: move, bg, add, remove, split, merge
+    njumptypes=6
+    jumpprobability=[1,0,.1,.1,.1,.1] # Model with no bg 
+    jumpprobability=jumpprobability/sum(jumpprobability)
+
+    # create an RJMCMC structure with all model info
+    acceptfuns=[BAMF.accept_move,BAMF.accept_bg,BAMF.accept_add,BAMF.accept_remove,BAMF.accept_split,BAMF.accept_merge] #array of functions
+    propfuns=[BAMF.propose_move,BAMF.propose_bg,BAMF.propose_add,BAMF.propose_remove,BAMF.propose_split,BAMF.propose_merge] #array of functions
+    myRJMCMC=RJMCMC.RJMCMCStruct(burnin,iterations,njumptypes,jumpprobability,propfuns,acceptfuns)
+end
+#=
 # Create synthetic data
 data=BAMF.ArrayDD(sz)      
 BAMF.genmodel!(datastate,psf,data)
 BAMF.poissrnd!(data.data)
 # imshow(data.data)  #look at data  
 
-## setup the RJMCMC.jl model
-# Jumptypes are: move, bg, add, remove, split, merge
-njumptypes=6
-jumpprobability=[1,0,.1,.1,.1,.1] # Model with no bg 
-jumpprobability=jumpprobability/sum(jumpprobability)
-
-# create an RJMCMC structure with all model info
-acceptfuns=[BAMF.accept_move,BAMF.accept_bg,BAMF.accept_add,BAMF.accept_remove,BAMF.accept_split,BAMF.accept_merge] #array of functions
-propfuns=[BAMF.propose_move,BAMF.propose_bg,BAMF.propose_add,BAMF.propose_remove,BAMF.propose_split,BAMF.propose_merge] #array of functions
-myRJMCMC=RJMCMC.RJMCMCStruct(burnin,iterations,njumptypes,jumpprobability,propfuns,acceptfuns)
 =#
 
 @testset "BayesMultiFit.jl" begin
@@ -243,18 +250,23 @@ myRJMCMC=RJMCMC.RJMCMCStruct(burnin,iterations,njumptypes,jumpprobability,propfu
         end 
     end
     
-    #=test deterministic seed for calcintialstate and buildchain 
+    # test deterministic seed for calcintialstate and buildchain 
+    datastate, psf,xystd,istd,split_std,bndpixels,prior_photons= gendatastate(Int32(1))
     
-    state1 = BAMF.calcintialstate(myRJ, 5);
-    mychain=RJMCMC.buildchain(myRJMCMC,myRJ,state1);
+    expectDD=BAMF.ArrayDD(Int32(32))
+    rjsDD = BAMF.RJStruct(32,psf,xystd,istd,split_std,expectDD,bndpixels,prior_photons)
+    BAMF.genmodel!(datastate, rjsDD, expectDD)
+    stateDD = BAMF.calcintialstate(rjsDD, Int32(5));
+    RJMCMCDD = genRJMCMC();
+    
+    mychain=RJMCMC.buildchain(RJMCMCDD,rjsDD,stateDD);
     map_n,posterior_n,traj_n=BAMF.getn(mychain.states);
-    exp_posterior = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.9695662, 0.030433772];
+    exp_posterior = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.032546673, 0.054948926, 0.22437479, 0.2593871, 0.14054245, 0.21754138, 0.070658684];
     n_states, map_n=BAMF.getmapnstates(mychain.states);
-    @test map_n == 6
-    @test length(posterior_n) == 8
-    for i in 1:8
+    @test map_n == 14
+    @test length(posterior_n) == 18
+    for i in 1:18
         @test posterior_n[i] ≈ exp_posterior[i] atol=0.0000001
     end
-    @test length(n_states) == 4869=#
-    
+    @test length(n_states) == 263
 end
