@@ -5,7 +5,6 @@ Abstract type. Specific measurement types will inherit from MeasType
 
 Measurement types hold the number of images that measurement produces, the integration time, and any other information required to make that measurement type.
 """
-
 abstract type MeasType end
 
 """
@@ -13,7 +12,6 @@ abstract type MeasType end
 
 Contains the information necessary to create a direct detection measurement, the integration time, inttime, and the static number of images the DD measurement creates, images.
 """
-
 struct DDMeasType <: MeasType
     images::Int32
     inttime::Float32
@@ -32,7 +30,6 @@ SLIVERMeasType(images::Int32, inttime::Float32, invx::Float32, invy::Float32)
 
 Contains the information necessary to create a SLIVER measurement, the integration time, inttime, the xy coordinates of the inversion point, invx and invy, and the static number of images a SLIVER measurement creates, images.
 """
-
 struct SLIVERMeasType <: MeasType
     images::Int32
     inttime::Float32
@@ -55,8 +52,6 @@ end
 
 generates a MeasType object of the data type contained in the first entry in the tuple, with the integration time of the final entry in the tuple and the information provided by the tuple in the central entry.
 """
-
-
 function genMeasType(typeinfo::Tuple{DataType, Tuple, Float32})
     modeltype, inputs, inttime = typeinfo
     return modeltype(inputs, inttime)
@@ -68,7 +63,6 @@ end
 
 generates a list of MeasType structures. Tuple entries in the vector may optionally include the Float32 representing the integration time. If inttime entries are not included, the MeasType structures default to a integration time of 1/n, where n is the number of measurement types in the list.
 """
-
 function genMeasTypelist(typelist::Vector{Tuple{DataType, T}}) where {T<:Tuple}
     n = length(typelist)
     typelist_c = [(entry1, entry2, Float32(1/n)) for (entry1, entry2) in typelist]
@@ -84,7 +78,6 @@ end
 
 A representation of the model produced from the state of the system. The data is a 3 dimensional array representing the intensity of the points in each image produced by a measurement. The size is the width and height of the image in pixels, n is the number of measurements performed by the model, and meastypes is a vector containing the measurement types to be performed on the model.
 """
-
 struct AdaptData <: BAMFData
     n::Int32
     sz::Int32
@@ -110,7 +103,6 @@ end
 
 creates a copy of the AdaptData structure passed in, with an empty data field.
 """
-
 function genBAMFData(data::AdaptData)
     return AdaptData(data.sz, data.meastypes)
 end
@@ -120,7 +112,6 @@ end
 
 returns the appropriate modifier for the intensity based on distance from an emitter, r, and the point source function, psf.
 """
-
 function spread(psf::PSF_gauss2D, r::Float32)
     return exp(-(r^2) / (2 * psf.σ^2)) / (2 * π * psf.σ^2)
 end
@@ -134,7 +125,6 @@ end
 
 creates a set of images as determined by the measurement type meas, the state s, the size, and the point spread function.
 """
-
 function genimage(s::BAMFState, sz::Int32, psf::PSF, meas::DDMeasType)
     image = zeros(Float32, sz, sz, 1)
     image += [s.bg for ii in 1:sz, jj in 1:sz, kk in 1:1]
@@ -164,7 +154,6 @@ end
 
 modifies an AdaptData to show the appropriate images for the measurement types selected, the point spread function, the size, and the state.
 """
-
 function genmodel!(s::BAMFState, rjs::RJStruct, model::AdaptData)
     genmodel!(s, rjs.sz, rjs.psf, model)
 end
