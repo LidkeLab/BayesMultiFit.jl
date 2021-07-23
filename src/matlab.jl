@@ -194,5 +194,108 @@ function matlab_SLIVER_FlatBG(roi::Array{Float32,3},meastype::Vector{Int32},invx
     return Results_mapn
 end
 
+"""
+    pickpsf(psf::String, σ_psf::Float32)
+
+constructs a PSF object of the type indicated by the string psf with the internal value σ_psf.
+"""
+function pickpsf(psf::String, σ_psf::Float32)
+    if psf == "airy"
+        psft = PSF_airy2D
+    elseif psf == "gauss"
+        psft = PSF_gauss2D
+    end
+    return pickpsf(psft, σ_psf)
+end
+
+function pickpsf(psft::Type{T}, σ_psf::Float32) where {T <: PSF}
+    return psft(σ_psf)
+end
+
+"""
+    pickMeasType(meastype::Int32, invx::Float32, invy::Float32)
+
+returns a tuple of the MeasType appropriate to the integer and a tuple containing the information required to make that measurement
+"""
+function pickMeasType(meastype::Int32, invx::Float32, invy::Float32)
+    return pickMeasType(Val(meastype), invx, invy)
+end
+
+function pickMeasType(::Val{Int32(1)}, invx::Float32, invy::Float32)
+    return (DDMeasType, ())
+end
+
+function pickMeasType(::Val{Int32(2)}, invx::Float32, invy::Float32)
+    return (SLIVERMeasType, (invx, invy))
+end
+
+function pickMeasType(meastype::Int32, invx::Float32, invy::Float32, inttime::Float32)
+    e1, e2 = pickMeasType(meastype, invx, invy)
+    return (e1, e2, inttime)
+end
+
+"""
+    genMeasTypelist(meastypes::Vector{Int32}, invx::Vector{Float32}, invy::Vector{Float32}, inttime::Vector{Float32})
+
+returns a vector of appropriate MeasType structures with the appropriate integration times and the inversion point info.
+"""
+function genMeasTypelist(meastypes::Vector{Int32}, invx::Vector{Float32}, invy::Vector{Float32}, inttime::Vector{Float32})
+    n = length(meastypes)
+    if n == length(invx) && n == length(invy)
+        return genMeasTypelist([pickMeasType(meastypes[ii], invx[ii], invy[ii], inttime[ii]) for ii in 1:n])
+    end
+end
+
+function genMeasTypelist(meastypes::Vector{Int32}, invx::Vector{Float32}, invy::Vector{Float32})
+    n = length(meastypes)
+    inttime = Float32(1/n)
+    if n == length(invx) && n == length(invy)
+        return genMeasTypelist([pickMeasType(meastypes[ii], invx[ii], invy[ii], inttime) for ii in 1:n])
+    end
+end
+    
+
+"""
+    matlab_Adapt_FlatBG_mex(args::Vector{MxArray})
+
+passes the matlab input through julia to return a vector containing the predicted model information.
+"""
+function matlab_Adapt_FlatBG_mex(args::Vector{MATLAB.MxArray})
+    names = ["roi", "meastype", "invx", "invy", "psftype", "σ_psf", "θ_start", "θ_step", "len", "pdfvec", "burnin", "iterations", "xystd", "istd", "split_std", "bndpixels"]
+    argdict = Dict(names[ii] => MATLAB.jvalue(args[ii]) for ii in 1:length(names))
+    
+    # reshape pdfvec to appropriate dimensions
+    get!(argdict, "pdfvec", vec(pop!(argdict, "pdfvec")))
+    
+    # generate appropriate ArrayData structure
+    vars = ["meastype", "invx", "invy"]
+    meastype, invx, invy=ntuple(i->get(argdict, vars[i], "no entry"), 3)
+    meastypelist = genMeasTypelist(meastype, invx, invy)
+    sz = size(get(argdict, "roi", "no roi"), 1)
+    data = ArrayData(sz, meastypelist)
+    data.data = reshape(get(argdict, "roi", "no roi"), size(data.data))
+    
+    # generate appropriate PSF and RJStruct
+    psf= pickpsf(get(argdict, "psftype", "no psftype"), get(argdict, "σ_psf", "no σ_psf"))
+    vars= ["xystd", "istd", "split_std", "bndpixels", "len", "θ_start", "θ_step", "pdfvec"]
+    xystd, istd, split_std, bndpixels, len, θ_start, θ_step, pdfvec= ntuple(i->get(argdict, vars[i], "no entry"), 8)
+    prior_photons = RJPrior(len, θ_start, θ_step, pdfvec)
+    myRJ = RJStruct(sz, psf, xystd, istd, split_std, data, bndpixels, prior_photons)
+    
+    # create an RJMCMC structure with all model info
+    acceptfuns = [accept_move,accept_bg,accept_add,accept_remove,accept_split,accept_merge] # array of functions
+    propfuns = [propose_move,propose_bg,propose_add,propose_remove,propose_split,propose_merge] # array of functions
+    myRJMCMC = ReversibleJumpMCMC.RJMCMCStruct(get(argdict, "burnin", "no burnin"), get(argdict, "iterations", "no iterations"), njumptypes, jumpprobability, propfuns, acceptfuns)
+    
+    # create an initial state
+    state1 = calcintialstate(myRJ)
+
+## run chain. This is the call to the main algorithm
+    global matlab_chain
+    matlab_chain = ReversibleJumpMCMC.buildchain(myRJMCMC, myRJ, state1)
+    mapn = getmapn(matlab_chain.states)
+    return [mapn.x,mapn.y,mapn.photons,mapn.σ_x,mapn.σ_y,mapn.σ_photons]
+end
+
 
 
