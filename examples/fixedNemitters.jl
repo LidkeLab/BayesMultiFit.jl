@@ -5,8 +5,8 @@
 using Revise
 using Plots
 println(pwd())
-include("../src/RJMCMC.jl")
-include("../src/BAMF.jl")
+#include("../src/RJMCMC.jl")
+include("../src/BayesMultiFit.jl")
 using .RJMCMC
 
 ## create a dataset 

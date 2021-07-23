@@ -28,7 +28,7 @@ Most of the generation data is similar to that of the imagingsliver example.
 Also takes an optional PSF, otherwise uses a PSF_airy2D with a v of .2*pi 
 =# 
 
-function gendatastate(seed::Int32=-1, psf::BAMF.PSF=BAMF.PSF_airy2D(.2*pi))
+function gendatastate(seed::Int32=Int32(-1), psf::BAMF.PSF=BAMF.PSF_airy2D(.2*pi))
     if seed == -1
         Random.seed!()
     else

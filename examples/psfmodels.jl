@@ -1,7 +1,9 @@
 ## Show the calculation of Gaussian and Airy PSF models
 
-include("../src/BAMF.jl")
-import BAMF: RJMCMC
+#include("../src/BayesMultiFit.jl")
+#import BAMF: RJMCMC
+using BayesMultiFit
+BAMF=BayesMultiFit
 using ImageView
 using Plots
 ImageView.closeall()
