@@ -78,7 +78,7 @@ end
 
 A representation of the model produced from the state of the system. The data is a 3 dimensional array representing the intensity of the points in each image produced by a measurement. The size is the width and height of the image in pixels, n is the number of measurements performed by the model, and meastypes is a vector containing the measurement types to be performed on the model.
 """
-struct AdaptData <: BAMFData
+mutable struct AdaptData <: BAMFData
     n::Int32
     sz::Int32
     meastypes::Vector{MeasType}
@@ -165,6 +165,33 @@ function genmodel!(s::BAMFState, sz::Int32, psf::PSF, model::AdaptData)
         model.data[:, :, image:image+meastype.images-1] = images
         image+=meastype.images
     end
+end
+
+"""
+    calcresiduum(model::AdaptData, data::AdaptData) 
+
+sliver uses only the direct detection images for residuum and returns a ArrayDD type
+"""
+function calcresiduum(model::AdaptData, data::AdaptData) 
+    residuum = ArrayDD(model.sz)
+    for nn in 1:prod(size(residuum.data))
+        residuum.data[nn] = 0f0
+    end
+
+    image = 1
+    for meastype in model.meastypes
+        if isa(meastype, DDMeasType)
+            for jj in 1:data.sz, ii in 1:data.sz
+                residuum.data[ii,jj] += data.data[ii,jj,image] - model.data[ii,jj,image]
+            end
+        end
+        image += meastype.images
+    end
+    return residuum
+end
+
+function likelihoodratio(m::AdaptData, mtest::AdaptData, d::AdaptData)
+    return likelihoodratio(m.data, mtest.data, d.data)
 end
     
 

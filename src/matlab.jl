@@ -261,18 +261,23 @@ end
 passes the matlab input through julia to return a vector containing the predicted model information.
 """
 function matlab_Adapt_FlatBG_mex(args::Vector{MATLAB.MxArray})
+
     names = ["roi", "meastype", "invx", "invy", "psftype", "σ_psf", "θ_start", "θ_step", "len", "pdfvec", "burnin", "iterations", "xystd", "istd", "split_std", "bndpixels"]
     argdict = Dict(names[ii] => MATLAB.jvalue(args[ii]) for ii in 1:length(names))
-    
+
+    return matlab_Adapt_FlatBG(argdict)
+end
+
+function matlab_Adapt_FlatBG(argdict::Dict{String, T}) where {T<:Any}
     # reshape pdfvec to appropriate dimensions
     get!(argdict, "pdfvec", vec(pop!(argdict, "pdfvec")))
-    
+
     # generate appropriate ArrayData structure
     vars = ["meastype", "invx", "invy"]
     meastype, invx, invy=ntuple(i->get(argdict, vars[i], "no entry"), 3)
-    meastypelist = genMeasTypelist(meastype, invx, invy)
-    sz = size(get(argdict, "roi", "no roi"), 1)
-    data = ArrayData(sz, meastypelist)
+    meastypelist = vec(genMeasTypelist(meastype, invx, invy))
+    sz, = size(get(argdict, "roi", "no roi"), 1)
+    data = AdaptData(Int32(sz), meastypelist)
     data.data = reshape(get(argdict, "roi", "no roi"), size(data.data))
     
     # generate appropriate PSF and RJStruct
@@ -281,6 +286,10 @@ function matlab_Adapt_FlatBG_mex(args::Vector{MATLAB.MxArray})
     xystd, istd, split_std, bndpixels, len, θ_start, θ_step, pdfvec= ntuple(i->get(argdict, vars[i], "no entry"), 8)
     prior_photons = RJPrior(len, θ_start, θ_step, pdfvec)
     myRJ = RJStruct(sz, psf, xystd, istd, split_std, data, bndpixels, prior_photons)
+    jumpprobability = [1f0,0f0,1f-1,1f-1,1f-1,1f-1] # Model with no bg 
+    jumpprobability = jumpprobability / sum(jumpprobability)
+    njumptypes = Int32(length(jumpprobability))
+
     
     # create an RJMCMC structure with all model info
     acceptfuns = [accept_move,accept_bg,accept_add,accept_remove,accept_split,accept_merge] # array of functions
