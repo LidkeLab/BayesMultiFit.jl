@@ -60,7 +60,6 @@ the function uses the OS provided entropy.
 """
 function calcintialstate(rjs::RJStruct, seed::Int32=Int32(-1)) # find initial state for direct detection data 
     if seed == -1
-        Random.seed!();
     else
         Random.seed!(seed);
     end

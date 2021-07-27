@@ -217,6 +217,7 @@ end
 
 returns a tuple of the MeasType appropriate to the integer and a tuple containing the information required to make that measurement
 """
+
 function pickMeasType(meastype::Int32, invx::Float32, invy::Float32)
     return pickMeasType(Val(meastype), invx, invy)
 end
@@ -241,7 +242,7 @@ returns a vector of appropriate MeasType structures with the appropriate integra
 """
 function genMeasTypelist(meastypes::Vector{Int32}, invx::Vector{Float32}, invy::Vector{Float32}, inttime::Vector{Float32})
     n = length(meastypes)
-    if n == length(invx) && n == length(invy)
+    if n == length(invx) && n == length(invy) && n == length(inttime)
         return genMeasTypelist([pickMeasType(meastypes[ii], invx[ii], invy[ii], inttime[ii]) for ii in 1:n])
     end
 end
@@ -264,17 +265,30 @@ function matlab_Adapt_FlatBG_mex(args::Vector{MATLAB.MxArray})
 
     names = ["roi", "meastype", "invx", "invy", "psftype", "σ_psf", "θ_start", "θ_step", "len", "pdfvec", "burnin", "iterations", "xystd", "istd", "split_std", "bndpixels"]
     argdict = Dict(names[ii] => MATLAB.jvalue(args[ii]) for ii in 1:length(names))
-
-    return matlab_Adapt_FlatBG(argdict)
+    if length(args) == 17
+        return matlab_Adapt_FlatBG(argdict, MATLAB.jvalue(args[17]))
+    elseif length(args) == 16
+        return matlab_Adapt_FlatBG(argdict)
+    end
 end
 
-function matlab_Adapt_FlatBG(argdict::Dict{String, T}) where {T<:Any}
+function matlab_Adapt_FlatBG(argdict::Dict{String, T}, randseed::Int32=Int32(-1)) where {T<:Any}
     # reshape pdfvec to appropriate dimensions
     get!(argdict, "pdfvec", vec(pop!(argdict, "pdfvec")))
 
+    # make sure meastype, invx, invy are formatted as vectors
+    measvars = ["meastype", "invx", "invy"]
+    for var in measvars
+        if isa(get(argdict, var, "empty"), Vector)
+        else
+            newarg = [pop!(argdict, var)]
+            get!(argdict, var, newarg)
+        end
+    end
+    
     # generate appropriate ArrayData structure
-    vars = ["meastype", "invx", "invy"]
-    meastype, invx, invy=ntuple(i->get(argdict, vars[i], "no entry"), 3)
+    
+    meastype, invx, invy=ntuple(i->get(argdict, measvars[i], "no entry"), 3)
     meastypelist = vec(genMeasTypelist(meastype, invx, invy))
     sz, = size(get(argdict, "roi", "no roi"), 1)
     data = AdaptData(Int32(sz), meastypelist)
@@ -297,7 +311,7 @@ function matlab_Adapt_FlatBG(argdict::Dict{String, T}) where {T<:Any}
     myRJMCMC = ReversibleJumpMCMC.RJMCMCStruct(get(argdict, "burnin", "no burnin"), get(argdict, "iterations", "no iterations"), njumptypes, jumpprobability, propfuns, acceptfuns)
     
     # create an initial state
-    state1 = calcintialstate(myRJ)
+    state1 = calcintialstate(myRJ, randseed)
 
 ## run chain. This is the call to the main algorithm
     global matlab_chain

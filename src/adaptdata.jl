@@ -4,6 +4,12 @@
 Abstract type. Specific measurement types will inherit from MeasType
 
 Measurement types hold the number of images that measurement produces, the integration time, and any other information required to make that measurement type.
+
+To write a new MeasType structure, it must have images and integration time inttime as fields. There must also be the following functions: 
+    MeasType(info, inttime::Float32)> where info contains the rest of the information about the measurement type and images is set to some constant
+    MeasType(info::Tuple, inttime::Float32)> where the necessary info is contained in a tuple
+    pickMeasType(Val{Int32}, info)> where the necessary info is turned into a tuple and the Val(Int32) has the number associated with the measurement type and the output is (MeasType, (info))
+    genimage(s::BAMFState, sz::Int32, psf::PSF, meas::MeasType)> where an array of dimensions (sz, sz, meas.images) is produced from the state
 """
 abstract type MeasType end
 
@@ -170,7 +176,7 @@ end
 """
     calcresiduum(model::AdaptData, data::AdaptData) 
 
-sliver uses only the direct detection images for residuum and returns a ArrayDD type
+when it uses the AdaptData structure, it uses only the direct detection images for residuum and returns a ArrayDD type
 """
 function calcresiduum(model::AdaptData, data::AdaptData) 
     residuum = ArrayDD(model.sz)
