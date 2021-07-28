@@ -2,11 +2,12 @@
 
 
 # using BayesMultiFit
-include("../src/BayesMultiFit.jl")
+using BayesMultiFit
+import DisplayBAMF
+Disp=DisplayBAMF
 BAMF=BayesMultiFit
 using ReversibleJumpMCMC
 const RJMCMC = ReversibleJumpMCMC
-using ImageView
 using Plots
 using Distributions
 using MATLAB
@@ -34,7 +35,7 @@ len=Int32(1024)
 pdf_x=range(θ_start,step=θ_step,length=len)
 mypdf=pdf(g,pdf_x)
 plt=plot(pdf_x,mypdf)
-display(plt)
+#display(plt)
 prior_photons=BAMF.RJPrior(len,θ_start,θ_step,mypdf)
 
 # set emitter positions and intensity
@@ -77,21 +78,21 @@ state1=BAMF.calcintialstate(myRJ)
 ## Display
 plotly()
 zm=Int32(4)
-plt=BAMF.histogram2D(mychain.states,sz,zm,datastate)
+plt=Disp.histogram2D(mychain.states,sz,zm,datastate)
 display(plt)
 
 map_n,posterior_n,traj_n=BAMF.getn(mychain.states)
 plt2=plot(traj_n)
 display(plt2)
-BAMF.showoverlay(mychain.states,myRJ)
+Disp.showoverlay(mychain.states,myRJ)
 
 ## MAPN Results
 states_mapn,n=BAMF.getmapnstates(mychain.states)
-plt=BAMF.histogram2D(states_mapn,sz,zm,datastate)
+plt=Disp.histogram2D(states_mapn,sz,zm,datastate)
 display(plt)
 
 Results_mapn=BAMF.getmapn(mychain.states)
-BAMF.plotstate(datastate,Results_mapn)
+Disp.plotstate(datastate,Results_mapn)
 
 
 ## Teting the matlab interface
