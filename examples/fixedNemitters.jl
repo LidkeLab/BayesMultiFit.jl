@@ -3,11 +3,14 @@
 # !this example may be broken
 
 using Revise
+import DisplayBAMF
+Disp=DisplayBAMF
+using ReversibleJumpMCMC
+const RJMCMC = ReversibleJumpMCMC
 using Plots
+using Distributions
+using MATLAB
 println(pwd())
-#include("../src/RJMCMC.jl")
-include("../src/BayesMultiFit.jl")
-using .RJMCMC
 
 ## create a dataset 
 n=Int32(3)

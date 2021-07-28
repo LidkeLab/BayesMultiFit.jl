@@ -2,10 +2,13 @@
 
 #include("../src/BayesMultiFit.jl")
 #import BAMF: RJMCMC
-using BayesMultiFit
-BAMF=BayesMultiFit
-using ImageView
+import DisplayBAMF
+Disp=DisplayBAMF
+using ReversibleJumpMCMC
+const RJMCMC = ReversibleJumpMCMC
 using Plots
+using Distributions
+using MATLAB
 ImageView.closeall()
 
 

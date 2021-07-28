@@ -16,6 +16,10 @@ function SLIVER1DMeasType(info::Tuple, inttime::Float32)
     return SLIVER1DMeasType(inttime, invx)
 end
 
+function BAMF.pickMeasType(::Val{Int32(3)}, invx::Float32, invy::Float32)
+    return (SLIVER1DMeasType, (invx,))
+end
+
 function BAMF.genimage(s::BAMF.BAMFState, sz::Int32, psf::BAMF.PSF, meas::SLIVER1DMeasType)
     image = zeros(Float32, sz, sz, 2)
     cntr = Int32(ceil((sz + 1) / 2)) 

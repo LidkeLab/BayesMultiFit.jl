@@ -1,6 +1,6 @@
 module DisplayBAMF
 
-export imshow
+export imshow, BAMF
 
 using Plots
 using ImageView

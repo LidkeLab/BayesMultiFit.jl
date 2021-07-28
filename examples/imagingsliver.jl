@@ -1,11 +1,11 @@
 ## An example of emitter estimation from a combined direct detection and SLIVER measurement
 
-include("../src/BayesMultiFit.jl")
-BAMF=BayesMultiFit
+import DisplayBAMF
+Disp=DisplayBAMF
 using ReversibleJumpMCMC
 const RJMCMC = ReversibleJumpMCMC
-using ImageView
 using Plots
+using Distributions
 using MATLAB
 #ImageView.closeall()
 
@@ -121,7 +121,7 @@ state1=BAMF.calcintialstate(myRJ)
 
 zm=Int32(zoom)
 plotly()
-plt=BAMF.histogram2D(mychain.states,sz,zm,datastate)
+plt=Disp.histogram2D(mychain.states,sz,zm,datastate)
 display(plt)
 
 map_n,posterior_n,traj_n=BAMF.getn(mychain.states)
@@ -133,10 +133,10 @@ heatmap(postimage)
 
 ## MAPN Results
 states_mapn,n=BAMF.getmapnstates(mychain.states)
-plt=BAMF.histogram2D(states_mapn,sz,zm,datastate)
+plt=Disp.histogram2D(states_mapn,sz,zm,datastate)
 display(plt)
 Results_mapn=BAMF.getmapn(mychain.states)
-BAMF.plotstate(datastate,Results_mapn)
+Disp.plotstate(datastate,Results_mapn)
 
 
 ## Testing the matlab interface

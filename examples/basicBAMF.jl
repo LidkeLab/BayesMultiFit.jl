@@ -2,10 +2,8 @@
 
 
 # using BayesMultiFit
-using BayesMultiFit
 import DisplayBAMF
 Disp=DisplayBAMF
-BAMF=BayesMultiFit
 using ReversibleJumpMCMC
 const RJMCMC = ReversibleJumpMCMC
 using Plots
