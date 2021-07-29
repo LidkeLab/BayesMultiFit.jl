@@ -1,26 +1,32 @@
 using BayesMultiFit
 BAMF = BayesMultiFit
 
-struct SLIVER1DMeasType <: BAMF.MeasType
+"""
+SLIVER1DXMeasType(images::Int32, inttime::Float32, invx::Float32, invy::Float32)
+
+Contains the information necessary to create a SLIVER measurement, the integration time, inttime, the xy coordinates of the inversion point, invx and invy, and the static number of images a SLIVER measurement creates, images.
+"""
+
+struct SLIVER1DXMeasType <: BAMF.MeasType
     images::Int32
     inttime::Float32
     invx::Float32
 end
 
-function SLIVER1DMeasType(inttime::Float32, invx::Float32)
-    return SLIVER1DMeasType(Int32(2), inttime, invx)
+function SLIVER1DXMeasType(inttime::Float32, invx::Float32)
+    return SLIVER1DXMeasType(Int32(2), inttime, invx)
 end
 
-function SLIVER1DMeasType(info::Tuple, inttime::Float32)
+function SLIVER1DXMeasType(info::Tuple, inttime::Float32)
     invx, = info
-    return SLIVER1DMeasType(inttime, invx)
+    return SLIVER1DXMeasType(inttime, invx)
 end
 
 function BAMF.pickMeasType(::Val{Int32(3)}, invx::Float32, invy::Float32)
-    return (SLIVER1DMeasType, (invx,))
+    return (SLIVER1DXMeasType, (invx,))
 end
 
-function BAMF.genimage(s::BAMF.BAMFState, sz::Int32, psf::BAMF.PSF, meas::SLIVER1DMeasType)
+function BAMF.genimage(s::BAMF.BAMFState, sz::Int32, psf::BAMF.PSF, meas::SLIVER1DXMeasType)
     image = zeros(Float32, sz, sz, 2)
     cntr = Int32(ceil((sz + 1) / 2)) 
     for n_emit in 1:s.n, ii in 1:sz, jj in 1:sz
