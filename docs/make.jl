@@ -1,4 +1,4 @@
-push!(LOAD_PATH,"../BayesMultiFit/src/")
+push!(LOAD_PATH,"../src/")
 
 using Documenter, BayesMultiFit
 
