@@ -1,13 +1,3 @@
-module DisplayBAMF
-
-export imshow, BAMF
-
-using Plots
-using ImageView
-using Images
-using BayesMultiFit
-BAMF = BayesMultiFit
-
 ## Analysis and Display
 
 function circleShape(h, k, r)
@@ -15,16 +5,19 @@ function circleShape(h, k, r)
     h .+ r * sin.(θ), k .+ r * cos.(θ)
 end
 
+
+
+
 function histogram2D(states::Vector{Any}, sz::Int32, zoom::Int32)
-    x,y=BAMF.getxy(states)
+    x,y=getxy(states)
     xbins = range(1, sz;step=1 / zoom)
     ybins = range(1, sz;step=1 / zoom)
     histplot = histogram2d(x, y, nbins=xbins, ybins, aspect_ratio=:equal, show_empty_bins=true) 
     return histplot
 end
 
-function histogram2D(states::Vector{Any}, sz::Int32, zoom::Int32, d::BAMF.ArrayDD, truestate::BAMF.StateFlatBg)
-    x,y=BAMF.getxy(states)
+function histogram2D(states::Vector{Any}, sz::Int32, zoom::Int32, d::ArrayDD, truestate::StateFlatBg)
+    x,y=getxy(states)
     xbins = range(1, sz;step=1 / zoom)
     ybins = range(1, sz;step=1 / zoom)
     fig = heatmap(d.data, color=:greys)
@@ -36,8 +29,8 @@ function histogram2D(states::Vector{Any}, sz::Int32, zoom::Int32, d::BAMF.ArrayD
     return fig
 end
 
-function histogram2D(states::Vector{Any}, sz::Int32, zoom::Int32, truestate::BAMF.StateFlatBg)
-    x,y=BAMF.getxy(states)
+function histogram2D(states::Vector{Any}, sz::Int32, zoom::Int32, truestate::StateFlatBg)
+    x,y=getxy(states)
     xbins = range(1, sz;step=1 / zoom)
     ybins = range(1, sz;step=1 / zoom)
     fig=histogram2d(x, y, nbins=xbins, ybins, aspect_ratio=:equal, show_empty_bins=false) 
@@ -51,9 +44,9 @@ function histogram2D(states::Vector{Any}, sz::Int32, zoom::Int32, truestate::BAM
 end
 
 #"Show model and data vs chain step"
-function showoverlay(states::Vector{Any},rjs::BAMF.RJStruct)
+function showoverlay(states::Vector{Any},rjs::RJStruct)
     len=length(states)
-    tmp=BAMF.genBAMFData(rjs)
+    tmp=genBAMFData(rjs)
     sz=rjs.data.sz
     d=Array{Float32}(undef,(sz,sz*size(tmp.data,3),len))
     m=Array{Float32}(undef,(sz,sz*size(tmp.data,3),len))
@@ -63,7 +56,7 @@ function showoverlay(states::Vector{Any},rjs::BAMF.RJStruct)
     println(states[1])
     for nn=1:len
         d[:,:,nn]=dataim     
-        BAMF.genmodel!(states[nn],rjs,tmp)
+        genmodel!(states[nn],rjs,tmp)
         m[:,:,nn]=reshape(tmp.data,(rjs.sz,rjs.sz*size(rjs.data.data,3)))
     end
 
@@ -75,7 +68,7 @@ function showoverlay(states::Vector{Any},rjs::BAMF.RJStruct)
     imshow(out)
 end
 
-function plotstate(truestate::BAMF.StateFlatBg,foundstate::BAMF.StateFlatBg)
+function plotstate(truestate::StateFlatBg,foundstate::StateFlatBg)
     fig=plot()
     dcircle = 0.5
     for nn = 1:truestate.n
@@ -89,7 +82,7 @@ function plotstate(truestate::BAMF.StateFlatBg,foundstate::BAMF.StateFlatBg)
     return fig
 end
 
-function plotstate(truestate::BAMF.StateFlatBg,foundstate::BAMF.StateFlatBg_Results)
+function plotstate(truestate::StateFlatBg,foundstate::StateFlatBg_Results)
     fig=plot()
     dcircle = 0.5
     for nn = 1:truestate.n
@@ -105,4 +98,4 @@ function plotstate(truestate::BAMF.StateFlatBg,foundstate::BAMF.StateFlatBg_Resu
 end
 
 
-end # module
+
