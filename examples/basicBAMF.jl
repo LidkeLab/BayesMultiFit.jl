@@ -2,7 +2,9 @@
 
 
 # using BayesMultiFit
-include("../src/BayesMultiFit.jl")
+using BayesMultiFit
+import DisplayBAMF
+Disp=DisplayBAMF
 BAMF=BayesMultiFit
 using ReversibleJumpMCMC
 const RJMCMC = ReversibleJumpMCMC

@@ -6,7 +6,7 @@ SLIVER1DXMeasType(images::Int32, inttime::Float32, invx::Float32, invy::Float32)
 
 Contains the information necessary to create a SLIVER measurement, the integration time, inttime, the xy coordinates of the inversion point, invx and invy, and the static number of images a SLIVER measurement creates, images.
 
-THIS IS AN EXAMPLE OF AN ADAPTIVE MEASUREMENT TYPE AS IT WOULD BE ADDED TO THE AdaptiveMeasurements PACKAGE
+THIS IS AN EXAMPLE OF AN ADAPTIVE MEASUREMENT TYPE
 """
 struct SLIVER1DXMeasType <: BAMF.MeasType
     images::Int32
