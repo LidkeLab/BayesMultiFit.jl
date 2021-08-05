@@ -320,6 +320,13 @@ function matlab_Adapt_FlatBG(argdict::Dict{String, T}, randseed::Int32=Int32(-1)
     return [mapn.x,mapn.y,mapn.photons,mapn.σ_x,mapn.σ_y,mapn.σ_photons]
 end
 
+function matlab_getposterior_n()
+    map_n,posterior_n,traj_n = getn(matlab_chain.states)
+    return posterior_n
+end
 
+function matlab_getposterior(sz::Int32,zoom::Int32)
+    return getposterior(matlab_chain.states,sz,zoom)
+end
 
 
