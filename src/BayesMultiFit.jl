@@ -1,7 +1,7 @@
 module BayesMultiFit
 
 using Plots
-using ImageView
+#using ImageView
 using Distributions 
 using CUDA
 using ReversibleJumpMCMC
@@ -16,7 +16,7 @@ include("accept.jl")
 include("directdetection.jl")
 include("sliver.jl")
 include("analysis.jl")
-include("display.jl")
+#include("display.jl")
 include("matlab.jl")
 include("adaptdata.jl")
 
