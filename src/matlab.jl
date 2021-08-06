@@ -235,6 +235,22 @@ function pickMeasType(meastype::Int32, invx::Float32, invy::Float32, inttime::Fl
     return (e1, e2, inttime)
 end
 
+function pickMeasType(measinfo::Tuple{Int32, T}) where {T <: AbstractDict}
+    e1, e2 = measinfo
+    return pickMeasType(Val(e1), e2)
+end
+
+function pickMeasType(::Val{Int32(1)}, info::T) where {T <: AbstractDict}  
+    inttime = get(info, "IntTime", Int32(1))
+    return (DDMeasType, (), inttime)
+end
+
+function pickMeasType(::Val{Int32(2)}, info::T) where {T <: AbstractDict}
+    inttime = get(info, "IntTime", 1f0)
+    measinfo = (get(info, "InvX", 0f0), get(info, "InvY", 0f0))
+    return (SLIVERMeasType, measinfo, inttime)
+end
+
 """
     genMeasTypelist(meastypes::Vector{Int32}, invx::Vector{Float32}, invy::Vector{Float32}, inttime::Vector{Float32})
 
@@ -254,7 +270,10 @@ function genMeasTypelist(meastypes::Vector{Int32}, invx::Vector{Float32}, invy::
         return genMeasTypelist([pickMeasType(meastypes[ii], invx[ii], invy[ii], inttime) for ii in 1:n])
     end
 end
-    
+
+function genMeasTypelist(meastypes::Vector{Tuple{Int32, T}}) where {T <: AbstractDict}
+    return [pickMeasType(entry) for entry in meastypes]
+end
 
 """
     matlab_Adapt_FlatBG_mex(args::Vector{MxArray})
@@ -262,14 +281,24 @@ end
 passes the matlab input through julia to return a vector containing the predicted model information.
 """
 function matlab_Adapt_FlatBG_mex(args::Vector{MATLAB.MxArray})
-
-    names = ["roi", "meastype", "invx", "invy", "psftype", "σ_psf", "θ_start", "θ_step", "len", "pdfvec", "burnin", "iterations", "xystd", "istd", "split_std", "bndpixels"]
-    argdict = Dict(names[ii] => MATLAB.jvalue(args[ii]) for ii in 1:length(names))
-    if length(args) == 17
-        return matlab_Adapt_FlatBG(argdict, MATLAB.jvalue(args[17]))
-    elseif length(args) == 16
+    
+    if length(args) == 16
+        names = ["roi", "meastype", "invx", "invy", "psftype", "σ_psf", "θ_start", "θ_step", "len", "pdfvec", "burnin", "iterations", "xystd", "istd", "split_std", "bndpixels"]
+        argdict = Dict(names[ii] => MATLAB.jvalue(args[ii]) for ii in 1:length(names))
         return matlab_Adapt_FlatBG(argdict)
+    elseif length(args) == 2
+        BAMFStruct = args[2]
+        BAMFData = MATLAB.jdict(args[1]);
+        Struct=[]
+        MATLAB.mat"$len = length($BAMFStruct)"
+        for i in 1:len
+            MATLAB.mat"$entry = $BAMFStruct{$i}"
+            push!(Struct, entry)
+        end
+        BAMFStruct = Struct
+        return matlab_Adapt_FlatBG(BAMFData, BAMFStruct)
     end
+
 end
 
 function matlab_Adapt_FlatBG(argdict::Dict{String, T}, randseed::Int32=Int32(-1)) where {T<:Any}
@@ -286,7 +315,7 @@ function matlab_Adapt_FlatBG(argdict::Dict{String, T}, randseed::Int32=Int32(-1)
         end
     end
     
-    # generate appropriate ArrayData structure
+    # generate appropriate AdaptData structure
     
     meastype, invx, invy=ntuple(i->get(argdict, measvars[i], "no entry"), 3)
     meastypelist = vec(genMeasTypelist(meastype, invx, invy))
@@ -328,5 +357,39 @@ end
 function matlab_getposterior(sz::Int32,zoom::Int32)
     return getposterior(matlab_chain.states,sz,zoom)
 end
+function matlab_Adapt_FlatBG(BAMFData::Dict{String, T}, BAMFStruct::V) where {T <: Any, V <: AbstractVector}
+    # reshape pdfvec to appropriate dimensions
+    pdfvec = vec(get(BAMFData, "PdfVec", []))
 
+    # generate appropriate AdaptData structure
+    meastypeinfo = [(pop!(entry, "Type"), entry) for entry in BAMFStruct]
+    meastypelist = genMeasTypelist(meastypeinfo)
+    sz, = size(get(BAMFData, "Data", []), 1)
+    data = AdaptData(Int32(sz), meastypelist)
+    data.data = reshape(get(BAMFData, "Data", []), size(data.data))
+    
+    # generate appropriate PSF and RJStruct
+    psf= pickpsf(get(BAMFData, "PsfType", "airy"), get(BAMFData, "AiryV", 1f0))
+    vars= ["XYStd", "IStd", "SplitStd", "BndPixels", "ThetaLen", "ThetaStart", "ThetaStep"]
+    xystd, istd, split_std, bndpixels, len, θ_start, θ_step = ntuple(i->get(BAMFData, vars[i], "no entry"), 7)
+    prior_photons = RJPrior(len, θ_start, θ_step, pdfvec)
+    myRJ = RJStruct(sz, psf, xystd, istd, split_std, data, bndpixels, prior_photons)
+    jumpprobability = [1f0,0f0,1f-1,1f-1,1f-1,1f-1] # Model with no bg 
+    jumpprobability = jumpprobability / sum(jumpprobability)
+    njumptypes = Int32(length(jumpprobability))
 
+    # create an RJMCMC structure with all model info
+    acceptfuns = [accept_move,accept_bg,accept_add,accept_remove,accept_split,accept_merge] # array of functions
+    propfuns = [propose_move,propose_bg,propose_add,propose_remove,propose_split,propose_merge] # array of functions
+    burnin, iterations = (get(BAMFData, "Burnin", Int32(1000)), get(BAMFData, "Iterations", Int32(1000)))
+    myRJMCMC = ReversibleJumpMCMC.RJMCMCStruct(burnin, iterations, njumptypes, jumpprobability, propfuns, acceptfuns)
+
+    # create an initial state
+    state1 = calcintialstate(myRJ)
+
+## run chain. This is the call to the main algorithm
+    global matlab_chain
+    matlab_chain = ReversibleJumpMCMC.buildchain(myRJMCMC, myRJ, state1)
+    mapn = getmapn(matlab_chain.states)
+    return [mapn.x,mapn.y,mapn.photons,mapn.σ_x,mapn.σ_y,mapn.σ_photons]
+end
