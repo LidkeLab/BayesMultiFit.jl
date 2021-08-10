@@ -17,7 +17,6 @@ include("directdetection.jl")
 include("sliver.jl")
 include("analysis.jl")
 #include("display.jl")
-include("matlab.jl")
 include("adaptdata.jl")
 
 
