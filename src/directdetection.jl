@@ -59,9 +59,12 @@ function calcresiduum(model::ArrayDD,data::ArrayDD)
     return residuum
 end
 
+"""
+    makepdf!(a::ArrayDD)
 
+make all elements sum to 1
+"""
 function makepdf!(a::ArrayDD)
-#make all elements sum to 1
 mysum=0;
 for nn=1:a.sz*a.sz
     a.data[nn]=max(0,a.data[nn])
@@ -72,14 +75,23 @@ for nn=1:a.sz*a.sz
 end
 end
 
+"""
+    makecdf!(a::ArrayData)
+
+make the array a normalized CDF
+"""
 function makecdf!(a::ArrayDD)
-#make the array a normalized CDF
 makepdf!(a)
 for nn=2:a.sz*a.sz
     a.data[nn]+=a.data[nn-1];
 end
 end
 
+"""
+    arrayrand!(a::ArrayDD)
+
+Pulls random number from pdf array. This converts input to cdf
+"""
 function arrayrand!(a::ArrayDD)
 #pull random number from pdf array
 #this converts input to cdf

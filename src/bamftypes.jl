@@ -36,7 +36,7 @@ abstract type BAMFData end
 """
     StateFlatBg<: BAMFState
 
-Abstract type with childern that implement CPU and GPU variants 
+Abstract type with children that implement CPU and GPU variants 
 """    
 abstract type StateFlatBg <: BAMFState end
 

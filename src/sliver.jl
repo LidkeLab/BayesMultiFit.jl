@@ -52,7 +52,7 @@ function genmodel!(m::StateFlatBg, sz::Int32, psf::PSF_airy2D, model::DataSLIVER
     
     cntr = Int32(ceil((sz + 1) / 2))
     for ii = 1:prod(size(model.data))
-        model.data[ii] = 0f0;
+        model.data[ii] = m.bg;
     end
 
     # build amplitude images

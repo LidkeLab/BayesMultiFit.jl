@@ -1,10 +1,11 @@
 module BayesMultiFit
 
 using Plots
-using ImageView
+#using ImageView
 using Distributions 
 using CUDA
 using ReversibleJumpMCMC
+using Random
 
 include("bamftypes.jl")
 include("helpers.jl")
@@ -15,8 +16,9 @@ include("accept.jl")
 include("directdetection.jl")
 include("sliver.jl")
 include("analysis.jl")
-include("display.jl")
+#include("display.jl")
 include("matlab.jl")
+include("adaptdata.jl")
 
 
 function likelihoodratio(sz,m::CuArray{Float32,2}, mtest::CuArray{Float32,2}, d::CuArray{Float32,2})
