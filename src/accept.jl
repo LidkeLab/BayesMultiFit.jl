@@ -4,6 +4,22 @@
 # bg, move, add,remove, split, merge
 
 
+function checkbounds(rjs::RJStruct, teststate::BAMFState,idx::Int32)
+  
+    outofbounds=false;
+    
+    if (teststate.x[idx] < -rjs.bndpixels)||(teststate.y[idx] < -rjs.bndpixels)||
+        (teststate.x[idx] > rjs.sz+rjs.bndpixels)||(teststate.y[idx] > rjs.sz+rjs.bndpixels)
+        outofbounds=true;    
+    end
+
+    return outofbounds
+end
+
+
+
+
+
 function accept_move(rjs::RJStruct, currentstate::BAMFState, teststate::BAMFState,idx::Int32)   
     
     if idx<1 return 0 end
@@ -59,7 +75,16 @@ function accept_split(rjs::RJStruct, currentstate::BAMFState, teststate::BAMFSta
     if idx1==0
         return 0
     end
-    
+
+    # reject if split gives value outside x,y prior
+    if checkbounds(rjs,teststate,idx1)
+        return 0
+    end
+
+    if checkbounds(rjs,teststate,idx2)
+        return 0
+    end
+
     roi = genBAMFData(rjs)
     roitest = genBAMFData(rjs)
     genmodel!(currentstate, rjs, roi)

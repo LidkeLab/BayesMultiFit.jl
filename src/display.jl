@@ -65,7 +65,7 @@ function showoverlay(states::Vector{Any},rjs::RJStruct)
     m=m./globmax
     out=cat(dims=1,d,m,d-m)
     println(size(out))
-    imshow(out)
+    return out
 end
 
 function plotstate(truestate::StateFlatBg,foundstate::StateFlatBg)

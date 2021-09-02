@@ -1,11 +1,15 @@
 module BayesMultiFit
 
 using Plots
-#using ImageView
 using Distributions 
 using CUDA
 using ReversibleJumpMCMC
 using Random
+using MicroscopePSFs
+using FLoops
+using Clustering
+using Statistics
+using StatsBase
 
 include("bamftypes.jl")
 include("helpers.jl")
@@ -16,7 +20,7 @@ include("accept.jl")
 include("directdetection.jl")
 include("sliver.jl")
 include("analysis.jl")
-#include("display.jl")
+include("display.jl")
 include("adaptdata.jl")
 
 

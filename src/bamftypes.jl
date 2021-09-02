@@ -192,7 +192,7 @@ Holds the data to be analyzed, the priors, the PSF model, and parameters used in
 """
 mutable struct RJStruct # contains data and all static info for Direct Detection passed to BAMF functions 
     sz::Int32
-    psf::PSF
+    psf::MicroscopePSFs.PSF 
     xy_std::Float32
     I_std::Float32
     split_std::Float32

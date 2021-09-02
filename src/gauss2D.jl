@@ -42,3 +42,18 @@ end
 function max2int(psf::PSF_gauss2D)
     return 2*pi*psf.σ
 end
+
+function genmodel!(s::StateFlatBg, sz::Int32, psf::MicroscopePSFs.PSF, model::Array{Float32,2})
+
+    
+    for ii=1:sz^2
+        model[ii]=s.bg;
+    end
+
+    for nn = 1:s.n, jj = 1:sz, ii = 1:sz
+                model[ii+sz*(jj-1)] += s.photons[nn] *
+                MicroscopePSFs.pdf(psf,(s.x[nn]-jj,s.y[nn]-ii))
+    end
+end
+
+

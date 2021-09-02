@@ -112,9 +112,9 @@ state1=BAMF.calcintialstate(myRJ)
 
 
 ## Profiling
-# using ProfileView
-# ProfileView.@profview  mychain=RJMCMC.buildchain(myRJMCMC,myRJ,state1) # run once to trigger compilation (ignore this one)
-# ProfileView.@profview mychain=RJMCMC.buildchain(myRJMCMC,myRJ,state1)
+using ProfileView
+ProfileView.@profview  mychain=RJMCMC.buildchain(myRJMCMC,myRJ,state1) # run once to trigger compilation (ignore this one)
+ProfileView.@profview mychain=RJMCMC.buildchain(myRJMCMC,myRJ,state1)
 
 ## Display
 # accepts,pl2=RJMCMC.showacceptratio(mychain)

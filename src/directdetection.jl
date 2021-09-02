@@ -32,6 +32,10 @@ function genmodel!(m::StateFlatBg,psf::PSF,model::ArrayDD)
     genmodel!(m, model.sz, psf, model.data)
 end
 
+function genmodel!(m::StateFlatBg,psf::MicroscopePSFs.PSF,model::ArrayDD)
+    genmodel!(m, model.sz, psf, model.data)
+end
+
 
 function likelihoodratio(m::ArrayDD, mtest::ArrayDD, d::ArrayDD)
     return likelihoodratio(m.data,mtest.data,d.data)
