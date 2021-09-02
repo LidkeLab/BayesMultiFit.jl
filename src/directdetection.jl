@@ -97,6 +97,8 @@ function arrayrand!(a::ArrayDD)
 #this converts input to cdf
     makecdf!(a)
     r=rand()
+    #r must be less than the max value in a.data or else the while loop reads over the array
+    r=min(r,maximum(a.data))
     nn=1
     while a.data[nn]<r
         nn+=1

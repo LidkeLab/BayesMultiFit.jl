@@ -1,3 +1,5 @@
+export DataSLIVER
+
 ## Defines types and methods for the SLIVER imaging method
 
 # "n: number of data states
