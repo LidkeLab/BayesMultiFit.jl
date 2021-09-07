@@ -107,8 +107,8 @@ function arrayrand!(a::ArrayDD)
     while a.data[nn]<r
         nn+=1
     end
-    ii=rem(nn,a.sz)
-    jj=ceil(nn/a.sz)
+    ii=Int(rem(nn,a.sz))
+    jj=Int(ceil(nn/a.sz))
     return ii,jj 
 end
     
