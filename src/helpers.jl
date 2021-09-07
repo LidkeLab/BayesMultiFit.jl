@@ -1,11 +1,11 @@
 ## Helper functions
 """
-    randID(k::Int32)  
+    randID(k::Int)  
 
 return random number between 1 and k
 """
-function randID(k::Int32)
-    return Int32(ceil(k * rand()))
+function randID(k::Int)
+    return Int(ceil(k * rand()))
 end
 
 """

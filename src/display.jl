@@ -8,7 +8,7 @@ end
 
 
 
-function histogram2D(states::Vector{Any}, sz::Int32, zoom::Int32)
+function histogram2D(states::Vector{Any}, sz::Int, zoom::Int)
     x,y=getxy(states)
     xbins = range(1, sz;step=1 / zoom)
     ybins = range(1, sz;step=1 / zoom)
@@ -16,7 +16,7 @@ function histogram2D(states::Vector{Any}, sz::Int32, zoom::Int32)
     return histplot
 end
 
-function histogram2D(states::Vector{Any}, sz::Int32, zoom::Int32, d::ArrayDD, truestate::StateFlatBg)
+function histogram2D(states::Vector{Any}, sz::Int, zoom::Int, d::ArrayDD, truestate::StateFlatBg)
     x,y=getxy(states)
     xbins = range(1, sz;step=1 / zoom)
     ybins = range(1, sz;step=1 / zoom)
@@ -29,7 +29,7 @@ function histogram2D(states::Vector{Any}, sz::Int32, zoom::Int32, d::ArrayDD, tr
     return fig
 end
 
-function histogram2D(states::Vector{Any}, sz::Int32, zoom::Int32, truestate::StateFlatBg)
+function histogram2D(states::Vector{Any}, sz::Int, zoom::Int, truestate::StateFlatBg)
     x,y=getxy(states)
     xbins = range(1, sz;step=1 / zoom)
     ybins = range(1, sz;step=1 / zoom)

@@ -5,29 +5,27 @@ using BayesMultiFit
 BAMF=BayesMultiFit
 using ReversibleJumpMCMC
 const RJMCMC = ReversibleJumpMCMC
-using ImageView
 using Plots
 using Distributions
 using MicroscopePSFs
 const PSF=MicroscopePSFs
 using ProfileView
-
-#ImageView.closeall()
+#using ImageView
 
 ## simulation config
-n=Int32(6)      # number of emitters
+n=6             # number of emitters
 μ=1000          # mean photons per emitter               
-sz=Int32(16)    # ROI size in pixels
+sz=16           # ROI size in pixels
 iterations=5000 # RJMCMC iterations
 burnin=5000     # RJMCMC iterations for burn-in
 
 ## PSF config
 σ=1.3f0 # Gaussian PSF Sigma in Pixels
 pixelsize=1.0
-#psf=BAMF.PSF_gauss2D(σ)
 psf=PSF.Gauss2D(σ,pixelsize)
+
 # interpolated version 
-psf=PSF.InterpolatedPSF(psf,(sz*2,sz*2))
+#psf=PSF.InterpolatedPSF(psf,(sz*2,sz*2))
 
 ## setup prior distribution on intensity
 α=Float32(4)
@@ -81,13 +79,9 @@ state1=BAMF.calcintialstate(myRJ)
 @time mychain=RJMCMC.buildchain(myRJMCMC,myRJ,state1);
 # mychain=RJMCMC.buildchain(myRJMCMC,myRJ,state1)
 
-
-# Some profiling
-# ProfileView.@profview RJMCMC.buildchain(myRJMCMC,myRJ,state1)
-
 ## Display
 plotly()
-zm=Int32(4)
+zm=4
 plt=BAMF.histogram2D(mychain.states,sz,zm,datastate)
 display(plt)
 
@@ -95,7 +89,7 @@ map_n,posterior_n,traj_n=BAMF.getn(mychain.states)
 plt2=plot(traj_n)
 display(plt2)
 out=BAMF.showoverlay(mychain.states,myRJ)
-imshow(out)
+#imshow(out)
 
 ## MAPN Results
 states_mapn,n=BAMF.getmapnstates(mychain.states)

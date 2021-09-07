@@ -4,7 +4,7 @@
 # bg, move, add,remove, split, merge
 
 
-function checkbounds(rjs::RJStruct, teststate::BAMFState,idx::Int32)
+function checkbounds(rjs::RJStruct, teststate::BAMFState,idx::Int)
   
     outofbounds=false;
     
@@ -20,7 +20,7 @@ end
 
 
 
-function accept_move(rjs::RJStruct, currentstate::BAMFState, teststate::BAMFState,idx::Int32)   
+function accept_move(rjs::RJStruct, currentstate::BAMFState, teststate::BAMFState,idx::Int)   
     
     if idx<1 return 0 end
     roi = genBAMFData(rjs)
@@ -45,7 +45,7 @@ function accept_bg(rjs::RJStruct, currentstate::BAMFState, teststate::BAMFState)
     return rand()
 end
 
-function accept_add(rjs::RJStruct, currentstate::BAMFState, teststate::BAMFState,idx::Int32)
+function accept_add(rjs::RJStruct, currentstate::BAMFState, teststate::BAMFState,idx::Int)
     roi = genBAMFData(rjs)
     roitest = genBAMFData(rjs)
     genmodel!(currentstate, rjs, roi)
@@ -53,22 +53,22 @@ function accept_add(rjs::RJStruct, currentstate::BAMFState, teststate::BAMFState
     LLR = likelihoodratio(roi, roitest, rjs.data)
     #proposal probability
     residuum=calcresiduum(roitest,rjs.data)   
-    jj=Int32(min(roi.sz,max(1,round(teststate.x[idx]))))
-    ii=Int32(min(roi.sz,max(1,round(teststate.y[idx]))))
+    jj=Int(min(roi.sz,max(1,round(teststate.x[idx]))))
+    ii=Int(min(roi.sz,max(1,round(teststate.y[idx]))))
     p=arraypdf(residuum,ii,jj)
     α = LLR*(roi.sz+rjs.bndpixels)^2/p
     #println(("add: ",α,ii,jj,teststate.photons[end]))
     return α
 end
 
-function accept_remove(rjs::RJStruct, currentstate::BAMFState, teststate::BAMFState,idx::Int32)
+function accept_remove(rjs::RJStruct, currentstate::BAMFState, teststate::BAMFState,idx::Int)
     #use the inverse function
     if idx<1 return 0 end
     α=accept_add(rjs,teststate,currentstate,idx)
     return 1/α
 end
 
-function accept_split(rjs::RJStruct, currentstate::BAMFState, teststate::BAMFState,vararg=(Int32,Int32,Float32,Float32,Float32))
+function accept_split(rjs::RJStruct, currentstate::BAMFState, teststate::BAMFState,vararg=(Int,Int,Float32,Float32,Float32))
 
     idx1,idx2,u1,u2,u3=vararg
 
@@ -111,7 +111,7 @@ function accept_split(rjs::RJStruct, currentstate::BAMFState, teststate::BAMFSta
 
 end
 
-function accept_merge(rjs::RJStruct, currentstate::BAMFState, teststate::BAMFState,vararg=(Int32,Int32,Float32,Float32,Float32))
+function accept_merge(rjs::RJStruct, currentstate::BAMFState, teststate::BAMFState,vararg=(Int,Int,Float32,Float32,Float32))
     idx1,idx2,u1,u2,u3=vararg
     if idx1<1 return 0 end
     α=accept_split(rjs,teststate,currentstate,(idx1,idx2,u1,u2,u3))

@@ -52,7 +52,7 @@ function getn(states::Vector{Any})
 
     cntmax = maximum(posterior_n)
     coords = findall(x -> x == cntmax, posterior_n)
-    map_n=Int32(coords[1]-1)
+    map_n=Int(coords[1]-1)
 
     return map_n,posterior_n,traj_n
 end
@@ -85,7 +85,7 @@ uses kmeans clustering group x,y locations into n clusters
 and returns a State_Results structure. 
 
 """
-function clusterstates(states::Vector{Any},n::Int32)
+function clusterstates(states::Vector{Any},n::Int)
     x,y,photons=getxy(states)
     X=cat(dims=1,x',y')
     R = kmeans(X, n; maxiter=200, display=:iter)
@@ -127,7 +127,7 @@ Get a 2D posterior probability image of source locations
 
 
 """
-function getposterior(states::Vector{Any}, sz::Int32, zoom::Int32)
+function getposterior(states::Vector{Any}, sz::Int, zoom::Int)
     x,y=getxy(states)
     xbins = range(0.5, sz+0.5;step=1 / zoom)
     ybins = range(0.5, sz+0.5;step=1 / zoom)

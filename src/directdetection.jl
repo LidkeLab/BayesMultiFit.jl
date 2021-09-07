@@ -8,11 +8,11 @@ data type for direct detection (i.e. a single image at a camera).
 abstract type ArrayDD <: BAMFData end
 
 mutable struct ArrayDD_CUDA <: ArrayDD  # direct detection data 
-    sz::Int32
+    sz::Int
     data::CuArray{Float32,2}
 end
 mutable struct ArrayDD_CPU <: ArrayDD  # direct detection data 
-    sz::Int32
+    sz::Int
     data::Array{Float32,2}
 end
 ArrayDD_CUDA(sz) = ArrayDD(sz, CuArray{Float32}(undef, sz, sz))
@@ -112,7 +112,7 @@ function arrayrand!(a::ArrayDD)
     return ii,jj 
 end
     
-function arraypdf(a::ArrayDD,ii::Int32,jj::Int32)
+function arraypdf(a::ArrayDD,ii::Int,jj::Int)
 #calculate probability at pixel index
 mysum=0;
 for nn=1:a.sz*a.sz

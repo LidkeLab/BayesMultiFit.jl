@@ -1,6 +1,5 @@
 ## Generic types and methods
 
-using CUDA
 
 
 """
@@ -42,7 +41,7 @@ abstract type StateFlatBg <: BAMFState end
 
 
 mutable struct StateFlatBg_CUDA <: StateFlatBg # this gets saved in chain
-    n::Int32
+    n::Int
     x::CuArray{Float32}
     y::CuArray{Float32}
     photons::CuArray{Float32}
@@ -50,12 +49,12 @@ mutable struct StateFlatBg_CUDA <: StateFlatBg # this gets saved in chain
 end
 
 """
-    StateFlatBg_CPU(n::Int32, x::Vector{Float32}, y::Vector{Float32}, photons::Vector{Float32}, bg::Float32)
+    StateFlatBg_CPU(n::Int, x::Vector{Float32}, y::Vector{Float32}, photons::Vector{Float32}, bg::Float32)
 
 State of a model that has x,y positions, total integrated intensity and a flat background offset. 
 """
 mutable struct StateFlatBg_CPU <: StateFlatBg # this gets saved in chain
-    n::Int32
+    n::Int
     x::Vector{Float32}
     y::Vector{Float32}
     photons::Vector{Float32}
@@ -63,7 +62,7 @@ mutable struct StateFlatBg_CPU <: StateFlatBg # this gets saved in chain
 end
 
 mutable struct StateFlatBg_Results <: StateFlatBg # this gets saved in chain
-    n::Int32
+    n::Int
     x::Vector{Float32}
     y::Vector{Float32}
     photons::Vector{Float32}
@@ -75,10 +74,10 @@ end
 
 
 StateFlatBg() = StateFlatBg_CPU(0, [0], [0], [0], 0)
-StateFlatBg(n::Int32) = StateFlatBg_CPU(n, Vector{Float32}(undef,n),Vector{Float32}(undef,n), Vector{Float32}(undef,n), 0)
-StateFlatBg(n::Int32, x::Vector{Float32},y::Vector{Float32}, photons::Vector{Float32},bg::Float32)=StateFlatBg_CPU(n, x,y,photons, bg)
-StateFlatBg_CUDA(n::Int32) = StateFlatBg_CPU(n, CuArray{Float32}(undef,n), CuArray{Float32}(undef,n), CuArray{Float32}(undef,n), 0)
-StateFlatBg_Results(n::Int32) = StateFlatBg_Results(n, Vector{Float32}(undef,n),
+StateFlatBg(n::Int) = StateFlatBg_CPU(n, Vector{Float32}(undef,n),Vector{Float32}(undef,n), Vector{Float32}(undef,n), 0)
+StateFlatBg(n::Int, x::Vector{Float32},y::Vector{Float32}, photons::Vector{Float32},bg::Float32)=StateFlatBg_CPU(n, x,y,photons, bg)
+StateFlatBg_CUDA(n::Int) = StateFlatBg_CPU(n, CuArray{Float32}(undef,n), CuArray{Float32}(undef,n), CuArray{Float32}(undef,n), 0)
+StateFlatBg_Results(n::Int) = StateFlatBg_Results(n, Vector{Float32}(undef,n),
     Vector{Float32}(undef,n), Vector{Float32}(undef,n),Vector{Float32}(undef,n),Vector{Float32}(undef,n), Vector{Float32}(undef,n), 0)
 
 
@@ -111,14 +110,14 @@ function addemitter!(s::StateFlatBg,x::Float32,y::Float32,photons::Float32)
     push!(s.photons,photons)
 end
 
-function removeemitter!(s::StateFlatBg,idx::Int32)
+function removeemitter!(s::StateFlatBg,idx::Int)
     s.n=s.n-1
     deleteat!(s.x,idx)
     deleteat!(s.y,idx)
     deleteat!(s.photons,idx)
 end
 
-function findclosest(s::StateFlatBg,idx::Int32)
+function findclosest(s::StateFlatBg,idx::Int)
     if (s.n<2)||(idx<1) return 0 end
     
     mindis=1f5 #big
@@ -132,18 +131,18 @@ function findclosest(s::StateFlatBg,idx::Int32)
             end
         end
     end
-    return Int32(nn)
+    return nn
 end
 
-function findother(s::StateFlatBg,idx::Int32)
+function findother(s::StateFlatBg,idx::Int)
     if (s.n<2)||(idx<1) return 0 end
     
-    nn=ceil(s.n*rand())
+    nn=Int(ceil(s.n*rand()))
     while nn==idx
-        nn=ceil(s.n*rand())
+        nn=Int(ceil(s.n*rand()))
     end
 
-    return Int32(nn)
+    return nn
 end
 
 
@@ -155,7 +154,7 @@ end
 
 ## RJPrior -----------------
 mutable struct RJPrior
-    sz::Int32
+    sz::Int
     θ_start::Float32
     θ_step::Float32
     pdf::Vector{Float32}
@@ -180,7 +179,7 @@ calculate PDF(θ)
 """
 function priorpdf(rjp::RJPrior,θ)
 nn=round((θ-rjp.θ_start)/rjp.θ_step)
-nn=Int32(max(1,min(nn,rjp.sz)))
+nn=Int(max(1,min(nn,rjp.sz)))
 return rjp.pdf[nn]
 end
 
@@ -191,17 +190,17 @@ end
 Holds the data to be analyzed, the priors, the PSF model, and parameters used in the RJMCMC steps. 
 """
 mutable struct RJStruct # contains data and all static info for Direct Detection passed to BAMF functions 
-    sz::Int32
+    sz::Int
     psf::MicroscopePSFs.PSF 
     xy_std::Float32
     I_std::Float32
     split_std::Float32
     data::BAMFData
-    bndpixels::Int32
+    bndpixels::Int
     prior_photons::RJPrior
 end
-RJStruct(sz,psf,xy_std,I_std,split_std) = RJStruct(sz, psf, xy_std, I_std, split_std,ArrayDD(sz),Int32(2),RJPrior())
-RJStruct(sz,psf,xy_std,I_std,split_std,data::BAMFData) = RJStruct(sz, psf, xy_std, I_std, split_std,data,Int32(2),RJPrior())
+RJStruct(sz,psf,xy_std,I_std,split_std) = RJStruct(sz, psf, xy_std, I_std, split_std,ArrayDD(sz),2,RJPrior())
+RJStruct(sz,psf,xy_std,I_std,split_std,data::BAMFData) = RJStruct(sz, psf, xy_std, I_std, split_std,data,2,RJPrior())
 
 
 

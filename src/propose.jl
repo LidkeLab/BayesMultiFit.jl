@@ -13,17 +13,17 @@ function propose_move(rjs::RJStruct, currentstate::BAMFState)
     move_emitter!(idx, teststate.x, teststate.y, teststate.photons, rjs)
     return teststate, idx
 end
-function move_emitter!(ID::Int32, x::CuArray, y::CuArray, photons::CuArray, rjs::RJStruct) 
+function move_emitter!(ID::Int, x::CuArray, y::CuArray, photons::CuArray, rjs::RJStruct) 
     @cuda move_emitter_CUDA!(ID, x, y, photons, rjs.xy_std, rjs.I_std)
 end
-function move_emitter_CUDA!(ID::Int32, x, y, photons, xy_std::Float32, i_std::Float32)
+function move_emitter_CUDA!(ID::Int, x, y, photons, xy_std::Float32, i_std::Float32)
     x[ID] += xy_std * curandn()
     y[ID] += xy_std * curandn()
     photons[ID] += i_std * curandn()
     photons[ID] = max(0, photons[ID])
     return nothing
 end
-function move_emitter!(ID::Int32, x::Vector{Float32}, y::Vector{Float32}, photons::Vector{Float32}, rjs::RJStruct) 
+function move_emitter!(ID::Int, x::Vector{Float32}, y::Vector{Float32}, photons::Vector{Float32}, rjs::RJStruct) 
     if ID < 1 return nothing end
     x[ID] += rjs.xy_std * randn()
     y[ID] += rjs.xy_std * randn()
@@ -134,7 +134,7 @@ function propose_merge(rjs::RJStruct, currentstate::BAMFState)
     
     # println("merge")
     teststate = StateFlatBg(currentstate)
-    if currentstate.n<2 return teststate,(Int32(0),Int32(0),0f1,0f1,0f1) end
+    if currentstate.n<2 return teststate,(0,0,0f1,0f1,0f1) end
 
 
     # get an emitter
