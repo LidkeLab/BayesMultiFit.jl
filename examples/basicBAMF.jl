@@ -25,7 +25,7 @@ pixelsize=1.0
 psf=PSF.Gauss2D(σ,pixelsize)
 
 # interpolated version 
-#psf=PSF.InterpolatedPSF(psf,(sz*2,sz*2))
+psf=PSF.InterpolatedPSF(psf,(sz*2,sz*2))
 
 ## setup prior distribution on intensity
 α=Float32(4)
@@ -57,9 +57,9 @@ BAMF.poissrnd!(data.data)
 ## create a BAMF-type RJMCMC structure
 xystd=σ/10
 istd=10f0
-split_std=σ
+split_std=σ/2
 bndpixels=0f0
-myRJ=BAMF.RJStruct(sz,psf,xystd,istd,split_std,data,bndpixels,prior_photons)
+myRJ=BAMF.RJStruct(sz,psf,xystd,istd,split_std,data,bndpixels,prior_photons,BAMF.ArrayDD(sz),BAMF.ArrayDD(sz))
 
 ## setup the RJMCMC.jl model
 # Jumptypes are: move, bg, add, remove, split, merge

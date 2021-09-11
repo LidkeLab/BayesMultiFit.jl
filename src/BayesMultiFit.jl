@@ -10,6 +10,7 @@ using FLoops
 using Clustering
 using Statistics
 using StatsBase
+using LoopVectorization
 
 include("bamftypes.jl")
 include("helpers.jl")

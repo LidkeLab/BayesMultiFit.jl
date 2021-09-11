@@ -15,6 +15,7 @@ mutable struct ArrayDD_CPU <: ArrayDD  # direct detection data
     sz::Int
     data::Array{Float32,2}
 end
+
 ArrayDD_CUDA(sz) = ArrayDD(sz, CuArray{Float32}(undef, sz, sz))
 ArrayDD(sz) = ArrayDD_CPU(sz, Array{Float32}(undef, sz, sz))
 function deepcopy(a::ArrayDD_CPU)

@@ -14,9 +14,9 @@ using BenchmarkTools
 
 
 ## simulation config
-n=Int32(6)      # number of emitters
+n=6             # number of emitters
 μ=1000          # mean photons per emitter               
-sz=Int32(16)    # ROI size in pixels
+sz=16           # ROI size in pixels
 iterations=1000 # RJMCMC iterations
 burnin=1000     # RJMCMC iterations for burn-in
 
@@ -24,7 +24,7 @@ burnin=1000     # RJMCMC iterations for burn-in
 σ=1.3f0 # Gaussian PSF Sigma in Pixels
 pixelsize=1.0
 psf=PSF.Gauss2D(σ,pixelsize)
-psf=PSF.InterpolatedPSF(psf,(sz*2,sz*2))
+ psf=PSF.InterpolatedPSF(psf,(sz*2,sz*2))
 
 ## setup prior distribution on intensity
 α=Float32(4)
@@ -53,21 +53,31 @@ data=BAMF.ArrayDD(sz)
 
 @code_warntype BAMF.genmodel!(datastate,psf,data)
 @btime BAMF.genmodel!(datastate,psf,data)
-ProfileView.@profview RJMCMC.buildchain(myRJMCMC,myRJ,state1)
+@benchmark BAMF.genmodel!(datastate,psf,data)
 
+roi=[(i,j) for i=1:sz,j=1:sz]
+@benchmark MicroscopePSFs.pdf(psf,(0,0),(0,0))
+@benchmark MicroscopePSFs.pdf(psf,roi,(0,0))
 
+## Create synthetic data
+data=BAMF.ArrayDD(sz)      
+BAMF.genmodel!(datastate,psf,data)
 BAMF.poissrnd!(data.data)
+# imshow(data.data)  #look at data  
 
 ## create a BAMF-type RJMCMC structure
 xystd=σ/10
 istd=10f0
-split_std=σ
+split_std=σ/2
 bndpixels=0f0
-myRJ=BAMF.RJStruct(sz,psf,xystd,istd,split_std,data,bndpixels,prior_photons)
-# setup the RJMCMC.jl model
+myRJ=BAMF.RJStruct(sz,psf,xystd,istd,split_std,data,bndpixels,prior_photons,BAMF.ArrayDD(sz),BAMF.ArrayDD(sz))
+
+## setup the RJMCMC.jl model
+# Jumptypes are: move, bg, add, remove, split, merge
 njumptypes=6
 jumpprobability=[1,0,.1,.1,.1,.1] # Model with no bg 
 jumpprobability=jumpprobability/sum(jumpprobability)
+
 # create an RJMCMC structure with all model info
 acceptfuns=[BAMF.accept_move,BAMF.accept_bg,BAMF.accept_add,BAMF.accept_remove,BAMF.accept_split,BAMF.accept_merge] #array of functions
 propfuns=[BAMF.propose_move,BAMF.propose_bg,BAMF.propose_add,BAMF.propose_remove,BAMF.propose_split,BAMF.propose_merge] #array of functions
@@ -77,9 +87,9 @@ state1=BAMF.calcintialstate(myRJ)
 
 
 ## run chain. This is the call to the main algorithm
-
-@btime mychain=RJMCMC.buildchain(myRJMCMC,myRJ,state1);
+@code_warntype RJMCMC.buildchain(myRJMCMC,myRJ,state1)
 ProfileView.@profview RJMCMC.buildchain(myRJMCMC,myRJ,state1)
+@benchmark mychain=RJMCMC.buildchain(myRJMCMC,myRJ,state1)
 
 
 
