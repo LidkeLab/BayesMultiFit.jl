@@ -50,11 +50,7 @@ function propose_add(rjs::RJStruct, currentstate::BAMFState)
     teststate = StateFlatBg(currentstate)
     
     # calc residum
-    roi = genBAMFData(rjs)
-    roitest = genBAMFData(rjs)
-    genmodel!(currentstate, rjs, roi)
-    genmodel!(teststate, rjs, roitest)
-    residuum = calcresiduum(roitest, rjs.data)   
+    residuum = calcresiduum(rjs.modeldata, rjs.data)   
     # pick pixel
     ii, jj = arrayrand!(residuum)
 
