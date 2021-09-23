@@ -51,7 +51,8 @@ end
     calcintialstate(rjs::RJStruct, seed::Int32)  
 
 calculates an intial state by finding the maximum of the data and places an emitter
-at that location with an intensity selected from the prior. 
+at that location with an intensity selected from the prior. Calculates the model for the
+initial state and stores in rjs.modeldata
 
 allows the input of an optional non-negative, integer random seed that generates from 
 the Mersenne Twister library to produce deterministic initial states. If no integer is input, 
@@ -72,6 +73,8 @@ function calcintialstate(rjs::RJStruct, seed::Int32=Int32(-1)) # find initial st
     state1.y[1] = coords[1].I[1]
     state1.x[1] = coords[1].I[2]
     state1.photons[1] = priorrnd(rjs.prior_photons)
+
+    genmodel!(state1,rjs.psf,rjs.modeldata)
     return state1
 end
 

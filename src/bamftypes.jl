@@ -196,11 +196,15 @@ mutable struct RJStruct # contains data and all static info for Direct Detection
     I_std::Float32
     split_std::Float32
     data::BAMFData
-    bndpixels::Int
+    bndpixels::Float32
     prior_photons::RJPrior
+    modeldata::BAMFData
+    testdata::BAMFData
 end
-RJStruct(sz,psf,xy_std,I_std,split_std) = RJStruct(sz, psf, xy_std, I_std, split_std,ArrayDD(sz),2,RJPrior())
-RJStruct(sz,psf,xy_std,I_std,split_std,data::BAMFData) = RJStruct(sz, psf, xy_std, I_std, split_std,data,2,RJPrior())
+RJStruct(sz,psf,xy_std,I_std,split_std) = 
+    RJStruct(sz, psf, xy_std, I_std, split_std,ArrayDD(sz),2,RJPrior(),ArrayDD(sz),ArrayDD(sz))
+RJStruct(sz,psf,xy_std,I_std,split_std,data::BAMFData) = 
+    RJStruct(sz, psf, xy_std, I_std, split_std,data,2,RJPrior(),deepcopy(data),deepcopy(data))
 
 
 

@@ -9,8 +9,6 @@ using Plots
 using Distributions
 using MicroscopePSFs
 const PSF=MicroscopePSFs
-using ProfileView
-#using ImageView
 
 ## simulation config
 n=6             # number of emitters
@@ -20,12 +18,9 @@ iterations=5000 # RJMCMC iterations
 burnin=5000     # RJMCMC iterations for burn-in
 
 ## PSF config
-σ=1.3f0 # Gaussian PSF Sigma in Pixels
+σ=1.3 # Gaussian PSF Sigma in Pixels
 pixelsize=1.0
 psf=PSF.Gauss2D(σ,pixelsize)
-
-# interpolated version 
-#psf=PSF.InterpolatedPSF(psf,(sz*2,sz*2))
 
 ## setup prior distribution on intensity
 α=Float32(4)
@@ -57,9 +52,9 @@ BAMF.poissrnd!(data.data)
 ## create a BAMF-type RJMCMC structure
 xystd=σ/10
 istd=10f0
-split_std=σ
+split_std=σ/2
 bndpixels=0f0
-myRJ=BAMF.RJStruct(sz,psf,xystd,istd,split_std,data,bndpixels,prior_photons)
+myRJ=BAMF.RJStruct(sz,psf,xystd,istd,split_std,data,bndpixels,prior_photons,BAMF.ArrayDD(sz),BAMF.ArrayDD(sz))
 
 ## setup the RJMCMC.jl model
 # Jumptypes are: move, bg, add, remove, split, merge
@@ -88,8 +83,7 @@ display(plt)
 map_n,posterior_n,traj_n=BAMF.getn(mychain.states)
 plt2=plot(traj_n)
 display(plt2)
-out=BAMF.showoverlay(mychain.states,myRJ)
-#imshow(out)
+out=BAMF.showoverlay(mychain.states,myRJ);
 
 ## MAPN Results
 states_mapn,n=BAMF.getmapnstates(mychain.states)

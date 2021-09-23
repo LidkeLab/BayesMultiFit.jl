@@ -926,7 +926,7 @@ version = "0.1.0"
 
 [[MicroscopePSFs]]
 deps = ["Interpolations", "LoopVectorization", "SpecialFunctions"]
-path = "C:\\Users\\klidke\\Documents\\Julia\\MicroscopePSFs.jl"
+path = "../MicroscopePSFs.jl"
 uuid = "cb041358-c3ff-4140-98ff-83d5ae4723ab"
 version = "0.1.0"
 

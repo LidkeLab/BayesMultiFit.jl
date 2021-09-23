@@ -8,10 +8,9 @@ function genmodel!(s::StateFlatBg, sz::Int, psf::MicroscopePSFs.PSF,
         model[ii]=s.bg;
     end
 
-    for nn = 1:s.n, jj = 1:sz, ii = 1:sz
+    for jj = 1:sz, ii = 1:sz,nn = 1:s.n
                 model[ii+sz*(jj-1)] += s.photons[nn] *
                 MicroscopePSFs.pdf(psf,(jj,ii),(s.x[nn],s.y[nn]))
     end
 end
-
 
