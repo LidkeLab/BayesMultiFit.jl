@@ -1,3 +1,4 @@
+#= 
 """
     psfget(psf::BAMF.PSF)
 
@@ -10,7 +11,7 @@ end
 function psfget(psf::BAMF.PSF_gauss2D)
     return psf.σ
 end
-
+ =#
 """
     gendatastate(;seed::Integer=-1, psf::PSF=PSF_airy2D(.2*pi), n::Int32=6)
 
@@ -26,7 +27,7 @@ end
 
 Outputs a StateFlatBg datastate, as well as all the information needed for an RJStruct sans the BAMFData object as a tuple, in the following order: datastate, psf, sz, xystd, istd, split_std, bndpixels, prior_photons
 """
-function gendatastate(seed::Int32=Int32(-1); psf::BAMF.PSF=BAMF.PSF_airy2D(.2*pi), n::Int32=Int32(6), μ::Int64=1000, sz::Int32=Int32(32), α::Float32=Float32(4), bg::Float32=1f-6, istd::Float32=10f0, bndpixels::Float32=-20f0)
+function gendatastate(seed::Int32=Int32(-1); psf::PSF.PSF=PSF.Airy2D(1.2,0.6,0.1), n::Int32=Int32(6), μ::Int64=1000, sz::Int32=Int32(32), α::Float32=Float32(4), bg::Float32=1f-6, istd::Float32=10f0, bndpixels::Float32=-20f0)
     if seed == -1
         Random.seed!()
     else
@@ -34,7 +35,7 @@ function gendatastate(seed::Int32=Int32(-1); psf::BAMF.PSF=BAMF.PSF_airy2D(.2*pi
     end
     
     
-    σ=.42f0*pi/psfget(psf)
+    σ=.42f0*pi/psf.ν
     # setup prior distribution on intensity
     θ=Float32(μ/α)
     g=Gamma(α,θ)
@@ -49,7 +50,7 @@ function gendatastate(seed::Int32=Int32(-1); psf::BAMF.PSF=BAMF.PSF_airy2D(.2*pi
     x=sz/2f0*ones(Float32,n)+2*σ*randn(Float32,n)
     y=sz/2f0*ones(Float32,n)+ 2*σ*randn(Float32,n)
     photons=Float32.(rand(g,n))
-    datastate=BAMF.StateFlatBg(n,x,y,photons,bg)
+    datastate=BAMF.StateFlatBg(Int64(n),convert(Array{Float32},x),convert(Array{Float32},y),photons,bg)
     
     ## create a BAMF-type RJMCMC structure
     xystd=σ/10
@@ -67,13 +68,13 @@ function genBAMFDD(T::Type{BAMF.ArrayDD}, sz::Int32=Int32(32))
     return BAMF.ArrayDD(sz)
 end
 
-function genBAMFDD(T::Type{BAMF.DataSLIVER}, sz::Int32=Int32(32))
+#= function genBAMFDD(T::Type{BAMF.DataSLIVER}, sz::Int32=Int32(32))
     return BAMF.DataSLIVER(sz, [Int32(1)])
 end
 
 function genBAMFDD(T::Type{BAMF.AdaptData}, sz::Int32=Int32(32))
     return BAMF.AdaptData(sz, [(BAMF.DDMeasType, ())])
-end
+end =#
 
 """
     DDinfo(DD::BAMF.BAMFData) 
@@ -85,7 +86,7 @@ function DDinfo(DD::BAMF.BAMFData)
     sz= DD.sz
     return sz, dim, DD
 end
-
+#= 
 """
     genBAMFSLIVER(T::Type{BAMF.BAMFData}, sz::Int32) 
 
@@ -117,7 +118,7 @@ function SLIVERinfo(SLIVER::BAMF.AdaptData)
     inttime, invx, invy= SLIVER.meastypes[1].inttime, SLIVER.meastypes[1].invx, SLIVER.meastypes[1].invy
     return sz, dim, inttime, invx, invy, SLIVER
 end
-
+ =#
 """
     genRJMCMC(burnin::Int32, iterations::Int32) 
 
