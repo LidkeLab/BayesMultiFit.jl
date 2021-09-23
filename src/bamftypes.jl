@@ -205,6 +205,8 @@ RJStruct(sz,psf,xy_std,I_std,split_std) =
     RJStruct(sz, psf, xy_std, I_std, split_std,ArrayDD(sz),2,RJPrior(),ArrayDD(sz),ArrayDD(sz))
 RJStruct(sz,psf,xy_std,I_std,split_std,data::BAMFData) = 
     RJStruct(sz, psf, xy_std, I_std, split_std,data,2,RJPrior(),deepcopy(data),deepcopy(data))
+RJStruct(sz,psf,xy_std,I_std,split_std,data::BAMFData,bndpixels,prior_photons) = 
+    RJStruct(sz, psf, xy_std, I_std, split_std,data,bndpixels,prior_photons,deepcopy(data),deepcopy(data))
 
 
 

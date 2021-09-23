@@ -20,7 +20,7 @@ include("propose.jl")
 include("accept.jl")
 include("directdetection.jl")
 include("display.jl")
-
+include("analysis.jl")
 
 function likelihoodratio(sz,m::CuArray{Float32,2}, mtest::CuArray{Float32,2}, d::CuArray{Float32,2})
     LLR=CUDA.zeros(1)
