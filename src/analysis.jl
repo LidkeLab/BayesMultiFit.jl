@@ -57,6 +57,24 @@ function getn(states::Vector{Any})
     return map_n,posterior_n,traj_n
 end
 
+"""
+    getnstates(states::Vector{Any})
+
+return states with n number of emitters    
+"""
+function getnstates(states::Vector{Any},n::Int)
+    nstates=length(states)
+    idx=zeros(Bool,nstates)
+
+    for ii=1:length(states)
+        if states[ii].n==n
+            idx[ii]=true
+        end    
+    end
+    
+    return states[idx]
+end
+
 
 """
 states_mapn=getmapn(states::Vector{Any})
