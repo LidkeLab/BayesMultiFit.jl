@@ -82,8 +82,8 @@ function plotstate(truestate::StateFlatBg,foundstate::StateFlatBg)
     return fig
 end
 
-function plotstate(truestate::StateFlatBg,foundstate::StateFlatBg_Results)
-    fig=plot()
+function plotstate(truestate::StateFlatBg,foundstate::StateFlatBg_Results,fig::Plots.Plot{Plots.GRBackend}=plot())
+    #fig=plot()
     dcircle = 0.5
     for nn = 1:truestate.n
         plot!(fig, circleShape(truestate.x[nn], truestate.y[nn], dcircle), color=:blue,yflip=true)  
