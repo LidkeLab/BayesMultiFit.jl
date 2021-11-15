@@ -10,6 +10,8 @@ using Distributions
 using MicroscopePSFs
 const PSF=MicroscopePSFs
 
+plot_flag = false
+
 ## simulation config
 n=6             # number of emitters
 μ=1000          # mean photons per emitter               
@@ -31,8 +33,10 @@ len=Int32(1024)
 θ_step=Float32(5.0)
 pdf_x=range(θ_start,step=θ_step,length=len)
 mypdf=pdf(g,pdf_x)
-plt=plot(pdf_x,mypdf)
-display(plt)
+if plot_flag
+    plt=plot(pdf_x,mypdf)
+    display(plt)
+end
 prior_photons=BAMF.RJPrior(len,θ_start,θ_step,mypdf)
 
 # set emitter positions and intensity
@@ -75,24 +79,31 @@ state1=BAMF.calcintialstate(myRJ)
 # mychain=RJMCMC.buildchain(myRJMCMC,myRJ,state1)
 
 ## Display
-plotly()
-zm=4
-plt=BAMF.histogram2D(mychain.states,sz,zm,datastate)
-display(plt)
+if plot_flag
+    plotly()
+    zm=4
+    plt=BAMF.histogram2D(mychain.states,sz,zm,datastate)
+    display(plt)
+end
 
 map_n,posterior_n,traj_n=BAMF.getn(mychain.states)
-plt2=plot(traj_n)
-display(plt2)
-out=BAMF.showoverlay(mychain.states,myRJ);
+if plot_flag
+    plt2=plot(traj_n)
+    display(plt2)
+    out=BAMF.showoverlay(mychain.states,myRJ);
+end
 
 ## MAPN Results
 states_mapn,n=BAMF.getmapnstates(mychain.states)
-plt=BAMF.histogram2D(states_mapn,sz,zm,datastate)
-display(plt)
+if plot_flag
+    plt=BAMF.histogram2D(states_mapn,sz,zm,datastate)
+    display(plt)
+end
 
 Results_mapn=BAMF.getmapn(mychain.states)
-BAMF.plotstate(datastate,Results_mapn)
-
+if plot_flag
+    BAMF.plotstate(datastate,Results_mapn)
+end
 
 
 
