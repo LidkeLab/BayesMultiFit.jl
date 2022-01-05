@@ -44,20 +44,20 @@ function histogram2D(states::Vector{Any}, sz::Int, zoom::Int, truestate::StateFl
 end
 
 #"Show model and data vs chain step"
-function showoverlay(states::Vector{Any},rjs::RJStruct)
+function showoverlay(states::Vector{Any},data::BAMFData,psf::MicroscopePSFs.PSF)
     len=length(states)
-    tmp=genBAMFData(rjs)
-    sz=rjs.data.sz
+    tmp=deepcopy(data)
+    sz=data.sz
     d=Array{Float32}(undef,(sz,sz*size(tmp.data,3),len))
     m=Array{Float32}(undef,(sz,sz*size(tmp.data,3),len))
     println(size(d))
-    dataim=reshape(rjs.data.data,(rjs.sz,rjs.sz*size(rjs.data.data,3)))
+    dataim=reshape(data.data,(sz,sz*size(data.data,3)))
 
     println(states[1])
     for nn=1:len
         d[:,:,nn]=dataim     
-        genmodel!(states[nn],rjs,tmp)
-        m[:,:,nn]=reshape(tmp.data,(rjs.sz,rjs.sz*size(rjs.data.data,3)))
+        genmodel!(states[nn],psf,tmp)
+        m[:,:,nn]=reshape(tmp.data,(sz,sz*size(data.data,3)))
     end
 
     globmax=maximum((maximum(m),maximum(d)))
@@ -82,7 +82,7 @@ function plotstate(truestate::StateFlatBg,foundstate::StateFlatBg)
     return fig
 end
 
-function plotstate(truestate::StateFlatBg,foundstate::StateFlatBg_Results,fig::Plots.Plot{Plots.GRBackend}=plot())
+function plotstate(truestate::StateFlatBg,foundstate::StateFlatBg_Results; fig::Plots.Plot{Plots.GRBackend}=plot())
     #fig=plot()
     dcircle = 0.5
     for nn = 1:truestate.n

@@ -18,12 +18,12 @@ end
 
 ArrayDD_CUDA(sz) = ArrayDD(sz, CuArray{Float32}(undef, sz, sz))
 ArrayDD(sz) = ArrayDD_CPU(sz, Array{Float32}(undef, sz, sz))
-function deepcopy(a::ArrayDD_CPU)
-    b=ArrayDD(a.sz)
-    for nn=1:b.sz*b.sz
-        b.data[nn]=a.data[nn]
-    end
-end
+# function deepcopy(a::ArrayDD_CPU)
+#     b=ArrayDD(a.sz)
+#     for nn=1:b.sz*b.sz
+#         b.data[nn]=a.data[nn]
+#     end
+# end
 
 function genmodel!(m::StateFlatBg,rjs::RJStruct,model::ArrayDD)
     genmodel!(m, model.sz, rjs.psf, model.data)

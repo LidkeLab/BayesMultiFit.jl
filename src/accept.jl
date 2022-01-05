@@ -7,7 +7,7 @@
 function checkbounds(rjs::RJStruct, teststate::BAMFState,idx::Int)
     outofbounds=false;
     if (teststate.x[idx] < -rjs.bndpixels)||(teststate.y[idx] < -rjs.bndpixels)||
-        (teststate.x[idx] > rjs.sz+rjs.bndpixels)||(teststate.y[idx] > rjs.sz+rjs.bndpixels)
+        (teststate.x[idx] > rjs.data.sz+rjs.bndpixels)||(teststate.y[idx] > rjs.data.sz+rjs.bndpixels)
         outofbounds=true;    
     end
     return outofbounds
@@ -25,16 +25,25 @@ function accept_move(rjs::RJStruct, currentstate::BAMFState, teststate::BAMFStat
     end
 
     LR=likelihoodratio(rjs.modeldata, rjs.testdata, rjs.data)
-    PR=priorpdf(rjs.prior_photons,teststate.photons[idx])/
-        priorpdf(rjs.prior_photons,currentstate.photons[idx])        
+    PR=pdf(rjs.prior_photons,teststate.photons[idx])/
+        pdf(rjs.prior_photons,currentstate.photons[idx])        
     
     α = PR*LR
     return α
 end
 
-function accept_bg(rjs::RJStruct, currentstate::BAMFState, teststate::BAMFState)
-
-    return rand()
+function accept_bg(rjs::RJStruct, currentstate::BAMFState, teststate::BAMFState,idx::Int)
+    if teststate.bg<0 return 0 end
+    
+    genmodel!(currentstate, rjs, rjs.modeldata)
+    genmodel!(teststate, rjs, rjs.testdata)
+    
+    LR=likelihoodratio(rjs.modeldata, rjs.testdata, rjs.data)
+    PR=pdf(rjs.prior_background,teststate.bg)/
+        pdf(rjs.prior_background,currentstate.bg)        
+    
+    α = PR*LR
+    return α
 end
 
 function accept_add(rjs::RJStruct, currentstate::BAMFState, teststate::BAMFState,idx::Int)
@@ -80,13 +89,13 @@ function accept_split(rjs::RJStruct, currentstate::BAMFState, teststate::BAMFSta
     LLR=likelihoodratio(rjs.modeldata, rjs.testdata, rjs.data)
     
     #proposal probability
-    split_std = rjs.split_std
+    split_std = rjs.σ_split
     N=Normal(0,split_std)
     p=pdf(N,u2)*pdf(N,u3)
 
     #ratio on intensity priors
-    IR=priorpdf(rjs.prior_photons,teststate.photons[idx1])*priorpdf(rjs.prior_photons,teststate.photons[idx2])/
-        priorpdf(rjs.prior_photons,currentstate.photons[idx1])  
+    IR=pdf(rjs.prior_photons,teststate.photons[idx1])*pdf(rjs.prior_photons,teststate.photons[idx2])/
+        pdf(rjs.prior_photons,currentstate.photons[idx1])  
 
     #ratio of XY priors 
     XYPR=1/(rjs.data.sz+rjs.bndpixels)^2    
