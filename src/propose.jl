@@ -25,21 +25,24 @@ function move_emitter_CUDA!(ID::Int, x, y, photons, xy_std::Float32, i_std::Floa
 end
 function move_emitter!(ID::Int, x::Vector{Float32}, y::Vector{Float32}, photons::Vector{Float32}, rjs::RJStruct) 
     if ID < 1 return nothing end
-    x[ID] += rjs.xy_std * randn()
-    y[ID] += rjs.xy_std * randn()
+    x[ID] += rjs.σ_xy * randn()
+    y[ID] += rjs.σ_xy * randn()
 
-    x[ID]=max(0-rjs.bndpixels,min(rjs.sz+rjs.bndpixels,x[ID]))
-    y[ID]=max(0-rjs.bndpixels,min(rjs.sz+rjs.bndpixels,y[ID]))
+    sz=rjs.data.sz
+    x[ID]=max(0-rjs.bndpixels,min(sz+rjs.bndpixels,x[ID]))
+    y[ID]=max(0-rjs.bndpixels,min(sz+rjs.bndpixels,y[ID]))
 
-    photons[ID] += rjs.I_std * randn()
-    photons[ID] = max(rjs.prior_photons.θ_start, photons[ID])
+    photons[ID] += rjs.σ_photons * randn()
+    photons[ID] = max(1e-6, photons[ID])
     return nothing
 end
 
 
 
-function propose_bg()
-    return rand()
+function propose_bg(rjs::RJStruct, currentstate::BAMFState)
+    teststate = StateFlatBg(currentstate)
+    teststate.bg=currentstate.bg+rjs.σ_background*randn()
+    return teststate, 0
 end
 
 
@@ -55,12 +58,12 @@ function propose_add(rjs::RJStruct, currentstate::BAMFState)
     ii, jj = arrayrand!(residuum)
 
     # pick intensity from prior
-    photons = priorrnd(rjs.prior_photons)
+    photons = rand(rjs.prior_photons)
     if photons < 0
         println(photons)
     end
     # add new emitter
-    addemitter!(teststate, Float32(ii), Float32(jj), photons)
+    addemitter!(teststate, Float32(ii), Float32(jj), Float32(photons))
 
     return teststate, teststate.n
 end
@@ -103,7 +106,7 @@ function propose_split(rjs::RJStruct, currentstate::BAMFState)
 	mux = teststate.x[idx]
     muy = teststate.y[idx]
 
-    split_std = rjs.split_std
+    split_std = rjs.σ_split
     u1 = rand(Float32)
 	u2 = split_std * randn(Float32)
 	u3 = split_std * randn(Float32)
@@ -118,7 +121,7 @@ function propose_split(rjs::RJStruct, currentstate::BAMFState)
     x_new = mux - u1 * u2 / (1 - u1)
     y_new = muy - u1 * u3 / (1 - u1)    
 
-    addemitter!(teststate, x_new, y_new, photons_new)
+    addemitter!(teststate, Float32(x_new), Float32(y_new), Float32(photons_new))
 
     return teststate,(idx,teststate.n,u1,u2,u3)
 
