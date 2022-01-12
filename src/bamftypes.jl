@@ -79,7 +79,8 @@ StateFlatBg(n::Int, x::Vector{Float32},y::Vector{Float32}, photons::Vector{Float
 StateFlatBg_CUDA(n::Int) = StateFlatBg_CPU(n, CuArray{Float32}(undef,n), CuArray{Float32}(undef,n), CuArray{Float32}(undef,n), 0)
 StateFlatBg_Results(n::Int) = StateFlatBg_Results(n, Vector{Float32}(undef,n),
     Vector{Float32}(undef,n), Vector{Float32}(undef,n),Vector{Float32}(undef,n),Vector{Float32}(undef,n), Vector{Float32}(undef,n), 0)
-
+StateFlatBg_Results(state::StateFlatBg_CPU) = StateFlatBg_Results(state.n,state.x,state.y,state.photons,
+                        fill!(similar(state.x),NaN),fill!(similar(state.y),NaN),fill!(similar(state.photons),NaN),state.bg)
 
 function StateFlatBg_CUDACopy!(myempty,myfull)
     idx=threadIdx().x
