@@ -91,7 +91,8 @@ function accept_split(rjs::RJStruct, currentstate::BAMFState, teststate::BAMFSta
     #proposal probability
     split_std = rjs.σ_split
     N=Normal(0,split_std)
-    p=pdf(N,u2)*pdf(N,u3)
+    pb=Beta(2,2)  
+    p=pdf(N,u2)*pdf(N,u3)*pdf(pb,u1)    
 
     #ratio on intensity priors
     IR=pdf(rjs.prior_photons,teststate.photons[idx1])*pdf(rjs.prior_photons,teststate.photons[idx2])/

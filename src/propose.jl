@@ -98,7 +98,6 @@ function propose_split(rjs::RJStruct, currentstate::BAMFState)
 
     if idx==0
         return teststate,(idx,teststate.n,0f0,0f0,0f0)
-
     end
 
     # these are conserved 
@@ -107,7 +106,8 @@ function propose_split(rjs::RJStruct, currentstate::BAMFState)
     muy = teststate.y[idx]
 
     split_std = rjs.σ_split
-    u1 = rand(Float32)
+    pb=Beta(2,2)
+    u1 = Float32(rand(pb))
 	u2 = split_std * randn(Float32)
 	u3 = split_std * randn(Float32)
 
