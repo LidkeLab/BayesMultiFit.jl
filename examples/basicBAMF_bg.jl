@@ -44,18 +44,22 @@ x=sz*rand(Float32,n)
 y=sz*rand(Float32,n)
 
 photons=Float32.(rand(prior_photons,n))
-bg=1f-6
+bg=Float32(rand(prior_background))
+bg=1.0f0
 datastate=BAMF.StateFlatBg(n,x,y,photons,bg)
 
 ## Create synthetic data
 data=BAMF.ArrayDD(sz)      
 BAMF.genmodel!(datastate,psf,data)
 BAMF.poissrnd!(data.data)
-# imshow(data.data)  #look at data  
+
+if plot_flag
+    heatmap(data.data)  #look at data  
+end
 
 ## run chain. This is the call to the main algorithm
-# this example doesn't update background
-mychain=BAMF.bamf_roi(data,psf,prior_photons,prior_background; jumpprobability=[0.5,0,.1,.1,.1,.1])
+mychain=BAMF.bamf_roi(data,psf,prior_photons,prior_background)
+
 
 ## Display
 if plot_flag

@@ -72,7 +72,7 @@ function calcintialstate(rjs::RJStruct, seed::Int32=Int32(-1)) # find initial st
     coords = findall(x -> x == roimax, d)
     state1.y[1] = coords[1].I[1]
     state1.x[1] = coords[1].I[2]
-    state1.photons[1] = priorrnd(rjs.prior_photons)
+    state1.photons[1] = rand(rjs.prior_photons)
 
     genmodel!(state1,rjs.psf,rjs.modeldata)
     return state1

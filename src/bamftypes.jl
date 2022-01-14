@@ -101,6 +101,7 @@ function StateFlatBg(sf::StateFlatBg_CPU) # make a deep copy
         s.y[nn]=sf.y[nn]
         s.photons[nn]=sf.photons[nn]
     end
+    s.bg=sf.bg
     return s
 end
 
@@ -191,23 +192,26 @@ end
 Holds the data to be analyzed, the priors, the PSF model, and parameters used in the RJMCMC steps. 
 """
 mutable struct RJStruct # contains data and all static info for Direct Detection passed to BAMF functions 
-    sz::Int
-    psf::MicroscopePSFs.PSF 
-    xy_std::Float32
-    I_std::Float32
-    split_std::Float32
     data::BAMFData
-    bndpixels::Float32
-    prior_photons::RJPrior
+    psf::MicroscopePSFs.PSF
+    prior_photons::Distributions.UnivariateDistribution
+    prior_background::Distributions.UnivariateDistribution   
+    bndpixels::Real
+    σ_xy::Real
+    σ_split::Real
+    σ_photons::Real         
+    σ_background::Real
     modeldata::BAMFData
     testdata::BAMFData
 end
-RJStruct(sz,psf,xy_std,I_std,split_std) = 
-    RJStruct(sz, psf, xy_std, I_std, split_std,ArrayDD(sz),2,RJPrior(),ArrayDD(sz),ArrayDD(sz))
-RJStruct(sz,psf,xy_std,I_std,split_std,data::BAMFData) = 
-    RJStruct(sz, psf, xy_std, I_std, split_std,data,2,RJPrior(),deepcopy(data),deepcopy(data))
-RJStruct(sz,psf,xy_std,I_std,split_std,data::BAMFData,bndpixels,prior_photons) = 
-    RJStruct(sz, psf, xy_std, I_std, split_std,data,bndpixels,prior_photons,deepcopy(data),deepcopy(data))
+
+
+# RJStruct(sz,psf,xy_std,I_std,split_std) = 
+#     RJStruct(sz, psf, xy_std, I_std, split_std,ArrayDD(sz),2,RJPrior(),ArrayDD(sz),ArrayDD(sz))
+# RJStruct(sz,psf,xy_std,I_std,split_std,data::BAMFData) = 
+#     RJStruct(sz, psf, xy_std, I_std, split_std,data,2,RJPrior(),deepcopy(data),deepcopy(data))
+# RJStruct(sz,psf,xy_std,I_std,split_std,data::BAMFData,bndpixels,prior_photons) = 
+#     RJStruct(sz, psf, xy_std, I_std, split_std,data,bndpixels,prior_photons,deepcopy(data),deepcopy(data))
 
 
 
