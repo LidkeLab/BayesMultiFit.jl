@@ -44,7 +44,7 @@ function bamf_roi(data::BAMFData, psf::MicroscopePSFs.PSF, prior_photons::Distri
     bndpixels::Real = 0.0,
     σ_xy::Real = 0.05,
     σ_split::Real = 0.5,
-    σ_photons::Real = sqrt(mean(prior_photons)) / 10,
+    σ_photons::Real = min(sqrt(mean(prior_photons)) / 10 , std(prior_photons) / 10),
     σ_background::Real = sqrt(mean(prior_background)) / 10,
     burnin::Int=5000,
     iterations::Int=5000,
